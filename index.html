@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -83,32 +83,17 @@
     </div>
 </div>
 
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-    setLogLevel('debug'); // Enable debug logging for Firebase
-
-    // Global variables for Firebase configuration
-    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-    const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
-    let app, db, auth;
-    let userId;
+<script>
+    // Local storage key
+    const LOCAL_STORAGE_KEY = 'customerData';
 
     const form = document.getElementById('customer-form');
     const customersList = document.getElementById('customers-list');
-    const alertContainer = document.getElementById('alert-container');
     const modal = document.getElementById('custom-modal');
     const modalConfirm = document.getElementById('modal-confirm');
     const modalCancel = document.getElementById('modal-cancel');
-    const userIdDisplay = document.getElementById('user-id-display');
-    const copyIcon = document.getElementById('copy-icon');
-
-    const collectionPath = `artifacts/${appId}/public/data/customers`;
-
+    const loadingMessage = document.getElementById('loading');
+    
     // Function to show a custom alert message
     function showAlert(message, type = 'success') {
         const alertDiv = document.createElement('div');
@@ -119,7 +104,7 @@
             alertDiv.classList.add('bg-red-100', 'text-red-700');
         }
         alertDiv.textContent = message;
-        alertContainer.appendChild(alertDiv);
+        document.getElementById('alert-container').appendChild(alertDiv);
         setTimeout(() => alertDiv.remove(), 5000);
     }
 
@@ -139,8 +124,10 @@
     }
 
     // Function to render customers to the UI
-    function renderCustomers(customers) {
+    function renderCustomers() {
         customersList.innerHTML = '';
+        const customers = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY)) || [];
+        
         if (customers.length === 0) {
             customersList.innerHTML = '<p class="text-center text-gray-500">ยังไม่มีข้อมูลลูกค้า</p>';
         } else {
@@ -152,7 +139,6 @@
                         <p class="text-sm font-medium text-gray-900">${customer.firstName} ${customer.lastName}</p>
                         <p class="text-xs text-gray-500">เบอร์: ${customer.phone}</p>
                         <p class="text-xs text-gray-500">ที่อยู่: ${customer.address}</p>
-                        <p class="text-xs text-gray-500">UserID: ${customer.userId}</p>
                     </div>
                     <button class="bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1 rounded-full transition duration-150 ease-in-out" data-id="${customer.id}">
                         <i class="fa-solid fa-trash-can mr-1"></i> ลบ
@@ -161,10 +147,11 @@
                 customersList.appendChild(customerCard);
             });
         }
+        loadingMessage.style.display = 'none';
     }
 
-    // Function to handle form submission and save data to Firestore
-    async function addCustomer(event) {
+    // Function to handle form submission and save data to localStorage
+    function addCustomer(event) {
         event.preventDefault();
         
         const firstName = form.firstName.value.trim();
@@ -172,128 +159,50 @@
         const phone = form.phone.value.trim();
         const address = form.address.value.trim();
 
-        if (!db) {
-            showAlert('Firestore is not initialized.', 'error');
+        if (!firstName || !lastName || !phone || !address) {
+            showAlert('กรุณากรอกข้อมูลให้ครบถ้วน', 'error');
             return;
         }
 
-        try {
-            await addDoc(collection(db, collectionPath), {
-                firstName: firstName,
-                lastName: lastName,
-                phone: phone,
-                address: address,
-                userId: userId,
-                createdAt: new Date()
-            });
-            showAlert('บันทึกข้อมูลลูกค้าสำเร็จ!', 'success');
-            form.reset();
-        } catch (e) {
-            console.error("Error adding document: ", e);
-            showAlert('เกิดข้อผิดพลาดในการบันทึกข้อมูล: ' + e.message, 'error');
-        }
+        const customers = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY)) || [];
+        const newCustomer = {
+            id: Date.now().toString(),
+            firstName: firstName,
+            lastName: lastName,
+            phone: phone,
+            address: address
+        };
+        customers.push(newCustomer);
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(customers));
+        
+        showAlert('บันทึกข้อมูลลูกค้าสำเร็จ!', 'success');
+        form.reset();
+        renderCustomers();
     }
 
     // Function to delete a customer
-    async function deleteCustomer(docId) {
-        if (!db) {
-            showAlert('Firestore is not initialized.', 'error');
-            return;
-        }
-        try {
-            await deleteDoc(doc(db, collectionPath, docId));
-            showAlert('ลบข้อมูลลูกค้าสำเร็จ!', 'success');
-        } catch (e) {
-            console.error("Error removing document: ", e);
-            showAlert('เกิดข้อผิดพลาดในการลบข้อมูล: ' + e.message, 'error');
-        }
+    function deleteCustomer(docId) {
+        let customers = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY)) || [];
+        customers = customers.filter(customer => customer.id !== docId);
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(customers));
+        
+        showAlert('ลบข้อมูลลูกค้าสำเร็จ!', 'success');
+        renderCustomers();
     }
 
-    // Initial Firebase setup and real-time listener
-    window.onload = async () => {
-        if (!firebaseConfig) {
-            showAlert('Firebase config is missing.', 'error');
-            return;
+    // Event listeners
+    window.onload = renderCustomers;
+    form.addEventListener('submit', addCustomer);
+    customersList.addEventListener('click', (e) => {
+        if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
+            const button = e.target.closest('button');
+            const docId = button.getAttribute('data-id');
+            if (docId) {
+                showModal(docId);
+            }
         }
+    });
 
-        app = initializeApp(firebaseConfig);
-        db = getFirestore(app);
-        auth = getAuth(app);
-
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                userId = user.uid;
-            } else {
-                userId = crypto.randomUUID();
-                if (initialAuthToken) {
-                    try {
-                        await signInWithCustomToken(auth, initialAuthToken);
-                        userId = auth.currentUser.uid;
-                    } catch (error) {
-                        console.error("Error signing in with custom token: ", error);
-                        showAlert('Error signing in. Please try again.', 'error');
-                        return;
-                    }
-                } else {
-                    try {
-                        await signInAnonymously(auth);
-                        userId = auth.currentUser.uid;
-                    } catch (error) {
-                        console.error("Error signing in anonymously: ", error);
-                        showAlert('Error signing in. Please try again.', 'error');
-                        return;
-                    }
-                }
-            }
-            document.getElementById('status-message').classList.remove('hidden');
-            userIdDisplay.textContent = userId;
-
-            // Set up real-time listener for customers
-            const q = collection(db, collectionPath);
-            onSnapshot(q, (querySnapshot) => {
-                const customers = [];
-                querySnapshot.forEach((doc) => {
-                    customers.push({ id: doc.id, ...doc.data() });
-                });
-                renderCustomers(customers);
-            }, (error) => {
-                console.error("Error getting real-time data: ", error);
-                showAlert('ไม่สามารถดึงข้อมูลได้: ' + error.message, 'error');
-            });
-        });
-
-        // Event listener for form submission
-        form.addEventListener('submit', addCustomer);
-
-        // Event listener for delete buttons using event delegation
-        customersList.addEventListener('click', (e) => {
-            if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
-                const button = e.target.closest('button');
-                const docId = button.getAttribute('data-id');
-                if (docId) {
-                    showModal(docId);
-                }
-            }
-        });
-
-        // Event listener to copy User ID to clipboard
-        copyIcon.addEventListener('click', () => {
-            if (userId) {
-                navigator.clipboard.writeText(userId).then(() => {
-                    copyIcon.classList.remove('fa-copy');
-                    copyIcon.classList.add('fa-clipboard-check');
-                    showAlert('คัดลอก User ID เรียบร้อย!', 'success');
-                    setTimeout(() => {
-                        copyIcon.classList.remove('fa-clipboard-check');
-                        copyIcon.classList.add('fa-copy');
-                    }, 2000);
-                }).catch(err => {
-                    console.error('Failed to copy: ', err);
-                    showAlert('ไม่สามารถคัดลอกได้', 'error');
-                });
-            }
-        });
-    };
 </script>
 
 </body>
