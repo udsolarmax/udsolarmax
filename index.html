@@ -417,7 +417,7 @@
                 warrantyEnd.setFullYear(start.getFullYear() + serviceYears);
                 
                 if (dateToCheck.getTime() > warrantyEnd.getTime()) {
-                    return { status: 'expired', nextDate: 'หมดระยะเวลาประกันแล้ว' };
+                    return { status: 'expired', nextDate: 'ระบบหมดการรับประกันแล้ว' };
                 }
 
                 for (let i = 1; i <= serviceYears; i++) {
@@ -461,17 +461,24 @@
 
                     customerCard.innerHTML = `
                         <h3 class="text-xl font-semibold">${customer.name}</h3>
-                        <p><strong>ที่อยู่:</strong> ${customer.address || 'ไม่ระบุ'}</p>
-                        <p><strong>เบอร์โทรศัพท์:</strong> ${customer.phone || 'ไม่ระบุ'}</p>
-                        ${customer.googleMapsLink ? `<p><a href="${customer.googleMapsLink}" target="_blank" class="text-blue-500 hover:underline">ดูแผนที่</a></p>` : ''}
-                        <p><strong>วันที่ติดตั้ง:</strong> ${customer.startDate || 'ไม่ระบุ'}</p>
-                        <p><strong>รุ่นอินเวอร์เตอร์:</strong> ${customer.inverterModel || 'ไม่ระบุ'}</p>
-                        <p><strong>เลข SN อินเวอร์เตอร์:</strong> ${customer.inverterSN || 'ไม่ระบุ'}</p>
-                        <p><strong>รุ่นแผง:</strong> ${customer.panelModel || 'ไม่ระบุ'}</p>
-                        <p><strong>จำนวนแผง:</strong> ${customer.panelCount || 'ไม่ระบุ'}</p>
-                        ${customer.lastServiceDate ? `<p><strong>บริการครั้งล่าสุด:</strong> ${customer.lastServiceDate}</p>` : ''}
-                        <p><strong>ระยะเวลาการเซอร์วิส:</strong> ${customer.serviceYears || 'ไม่ระบุ'} ปี</p>
-                        ${nextServiceText}
+                        <div class="grid grid-cols-2 gap-4 mt-2">
+                           <div>
+                                <p><strong>ที่อยู่:</strong> ${customer.address || 'ไม่ระบุ'}</p>
+                                <p><strong>เบอร์โทรศัพท์:</strong> ${customer.phone || 'ไม่ระบุ'}</p>
+                                ${customer.googleMapsLink ? `<p><a href="${customer.googleMapsLink}" target="_blank" class="text-blue-500 hover:underline">ดูแผนที่</a></p>` : ''}
+                                <p><strong>วันที่ติดตั้ง:</strong> ${customer.startDate || 'ไม่ระบุ'}</p>
+                                <p><strong>รุ่นอินเวอร์เตอร์:</strong> ${customer.inverterModel || 'ไม่ระบุ'}</p>
+                                <p><strong>เลข SN อินเวอร์เตอร์:</strong> ${customer.inverterSN || 'ไม่ระบุ'}</p>
+                                <p><strong>รุ่นแผง:</strong> ${customer.panelModel || 'ไม่ระบุ'}</p>
+                                <p><strong>จำนวนแผง:</strong> ${customer.panelCount || 'ไม่ระบุ'}</p>
+                                ${customer.lastServiceDate ? `<p><strong>บริการครั้งล่าสุด:</strong> ${customer.lastServiceDate}</p>` : ''}
+                                <p><strong>ระยะเวลาการเซอร์วิส:</strong> ${customer.serviceYears || 'ไม่ระบุ'} ปี</p>
+                                ${nextServiceText}
+                            </div>
+                            <div class="h-48">
+                                ${customer.image3 ? `<img src="${customer.image3}" class="rounded-lg w-full h-full object-cover" alt="รูปภาพลูกค้า 3">` : '<div class="w-full h-full bg-gray-200 rounded-lg flex items-center justify-center p-2 text-sm text-gray-500">ไม่มีรูปภาพ 3</div>'}
+                            </div>
+                        </div>
                         <div class="grid grid-cols-2 gap-2 mt-4">
                             <div class="h-32">
                                 ${customer.image1 ? `<img src="${customer.image1}" class="rounded-lg w-full h-full object-cover" alt="รูปภาพลูกค้า 1">` : '<div class="w-full h-full bg-gray-200 rounded-lg flex items-center justify-center p-2 text-sm text-gray-500">ไม่มีรูปภาพ 1</div>'}
@@ -480,11 +487,7 @@
                                 ${customer.image2 ? `<img src="${customer.image2}" class="rounded-lg w-full h-full object-cover" alt="รูปภาพลูกค้า 2">` : '<div class="w-full h-full bg-gray-200 rounded-lg flex items-center justify-center p-2 text-sm text-gray-500">ไม่มีรูปภาพ 2</div>'}
                             </div>
                         </div>
-                        <div class="mt-4">
-                            <div class="w-full h-48 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center p-2 text-sm text-gray-500 overflow-hidden relative">
-                                ${customer.image3 ? `<img src="${customer.image3}" class="w-full h-full object-cover" alt="รูปภาพลูกค้า 3">` : 'ไม่มีรูปภาพ 3'}
-                            </div>
-                        </div>
+                        
                         <div class="mt-4 flex space-x-2">
                             <button class="btn btn-primary edit-btn" data-id="${customer.id}">แก้ไข</button>
                             <button class="btn btn-danger delete-btn" data-id="${customer.id}">ลบ</button>
@@ -666,4 +669,5 @@
     </script>
 </body>
 </html>
+
 
