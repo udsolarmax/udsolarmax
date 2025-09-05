@@ -335,10 +335,15 @@
             let customers = [];
             let confirmCallback = null;
 
-            const savedLogo = localStorage.getItem('appLogo');
-            if (savedLogo) {
-                appLogo.src = savedLogo;
-            }
+            // Load logo from Firestore on startup
+            const logoDocRef = doc(db, `artifacts/${appId}/public/settings/logo`);
+            const logoUnsubscribe = onSnapshot(logoDocRef, (docSnap) => {
+                if (docSnap.exists() && docSnap.data().logo) {
+                    appLogo.src = docSnap.data().logo;
+                } else {
+                    appLogo.src = 'https://placehold.co/250x100/A0A0A0/FFFFFF?text=UDsolarmax+Logo';
+                }
+            });
 
             let currentDate = new Date();
             
@@ -409,13 +414,20 @@
             image2Input.addEventListener('change', () => handleImageUpload(image2Input, image2Preview, 'image2'));
             image3Input.addEventListener('change', () => handleImageUpload(image3Input, image3Preview, 'image3'));
 
-            const resetImagePreviews = () => {
-                image1Preview.innerHTML = '<span>เลือกรูปภาพ</span>';
-                image2Preview.innerHTML = '<span>เลือกรูปภาพ</span>';
-                image3Preview.innerHTML = '<span>เลือกรูปภาพ</span>';
-                currentImages.image1 = '';
-                currentImages.image2 = '';
-                currentImages.image3 = '';
+            const resetImagePreviews = (customer = {}) => {
+                const imagePreviews = [image1Preview, image2Preview, image3Preview];
+                const imageKeys = ['image1', 'image2', 'image3'];
+
+                imagePreviews.forEach((preview, index) => {
+                    const key = imageKeys[index];
+                    preview.innerHTML = customer[key] ? `<img src="${customer[key]}" class="w-full h-full object-cover" alt="รูปภาพลูกค้า ${index + 1}">` : `<span>เลือกรูปภาพ</span>`;
+                });
+                
+                currentImages = {
+                    image1: customer.image1 || '',
+                    image2: customer.image2 || '',
+                    image3: customer.image3 || ''
+                };
             };
             
             const findServiceStatus = (startDate, serviceYears, dateToCheck) => {
@@ -460,8 +472,11 @@
                     customerCard.className = `customer-card ${dueStatus}`;
                     
                     let nextServiceText = `<strong>นัดเซอร์วิสครั้งต่อไป:</strong> ${nextDate}`;
+                    let warrantyMessage = '';
+
                     if (status === 'expired') {
-                         nextServiceText = `<p class="warranty-expired-text"><strong>${nextDate}</strong></p>`;
+                        nextServiceText = `<span class="warranty-expired-text"><strong>ระบบหมดการรับประกันแล้ว</strong></span>`;
+                        warrantyMessage = `<p class="warranty-expired-text mt-2 text-center"><strong>ระบบหมดการรับประกันแล้ว</strong></p>`;
                     } else if (status === 'due') {
                         nextServiceText = `<p class="font-bold text-red-500"><strong>นัดเซอร์วิสครั้งต่อไป:</strong> ${nextDate}</p>`;
                     }
@@ -495,6 +510,7 @@
                             </div>
                         </div>
                         
+                        ${warrantyMessage}
                         <div class="mt-4 flex space-x-2">
                             <button class="btn btn-primary edit-btn" data-id="${customer.id}">แก้ไข</button>
                             <button class="btn btn-danger delete-btn" data-id="${customer.id}">ลบ</button>
@@ -589,34 +605,8 @@
                         startDateInput.value = customerToEdit.startDate;
                         serviceYearsInput.value = customerToEdit.serviceYears;
                         
-                        currentImages.image1 = customerToEdit.image1;
-                        currentImages.image2 = customerToEdit.image2;
-                        currentImages.image3 = customerToEdit.image3;
+                        resetImagePreviews(customerToEdit);
                         
-                        resetImagePreviews();
-
-                        if (customerToEdit.image1) {
-                            const img = document.createElement('img');
-                            img.src = customerToEdit.image1;
-                            img.className = "w-full h-full object-cover";
-                            image1Preview.innerHTML = '';
-                            image1Preview.appendChild(img);
-                        }
-                        if (customerToEdit.image2) {
-                            const img = document.createElement('img');
-                            img.src = customerToEdit.image2;
-                            img.className = "w-full h-full object-cover";
-                            image2Preview.innerHTML = '';
-                            image2Preview.appendChild(img);
-                        }
-                        if (customerToEdit.image3) {
-                            const img = document.createElement('img');
-                            img.src = customerToEdit.image3;
-                            img.className = "w-full h-full object-cover";
-                            image3Preview.innerHTML = '';
-                            image3Preview.appendChild(img);
-                        }
-
                         submitBtn.textContent = 'บันทึกการแก้ไข';
                     }
                 } else if (target.classList.contains('delete-btn')) {
@@ -657,15 +647,22 @@
 
             testDateInput.addEventListener('change', () => {
                 displayCurrentDate();
+                renderCustomers(document.getElementById('showDueCustomersBtn').classList.contains('active'));
             });
 
-            logoUploadInput.addEventListener('change', (e) => {
+            logoUploadInput.addEventListener('change', async (e) => {
                 const file = e.target.files[0];
                 if (file) {
                     const reader = new FileReader();
-                    reader.onload = (e) => {
-                        appLogo.src = e.target.result;
-                        localStorage.setItem('appLogo', e.target.result);
+                    reader.onload = async (e) => {
+                        const logoData = { logo: e.target.result };
+                        try {
+                            await setDoc(doc(db, `artifacts/${appId}/public/settings/logo`), logoData);
+                            showMessage('บันทึกโลโก้เรียบร้อยแล้ว');
+                        } catch (error) {
+                            console.error("Error uploading logo: ", error);
+                            showMessage('เกิดข้อผิดพลาดในการอัปโหลดโลโก้');
+                        }
                     };
                     reader.readAsDataURL(file);
                 }
@@ -673,10 +670,12 @@
 
             showAllCustomersBtn.addEventListener('click', () => {
                 formSection.style.display = 'block';
+                renderCustomers(false);
             });
 
             showDueCustomersBtn.addEventListener('click', () => {
                 formSection.style.display = 'none';
+                renderCustomers(true);
             });
 
             displayCurrentDate();
