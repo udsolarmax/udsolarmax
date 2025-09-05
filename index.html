@@ -277,7 +277,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, getDocs, doc, setDoc, deleteDoc, onSnapshot, query, where, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Firebase configuration and initialization
@@ -287,13 +287,18 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
+        
         let userId = null;
-
+        
         document.addEventListener('DOMContentLoaded', async () => {
-            await signInAnonymously(auth);
+            if (typeof __initial_auth_token !== 'undefined') {
+                await signInWithCustomToken(auth, __initial_auth_token);
+            } else {
+                await signInAnonymously(auth);
+            }
             userId = auth.currentUser.uid;
             console.log("Authenticated with user ID:", userId);
-
+            
             const customerForm = document.getElementById('customerForm');
             const customerList = document.getElementById('customerList');
             const customerIdInput = document.getElementById('customerId');
@@ -321,7 +326,6 @@
             const formSection = document.getElementById('customerForm');
             const googleMapsLinkInput = document.getElementById('googleMapsLink');
 
-            // New input fields
             const inverterModelInput = document.getElementById('inverterModel');
             const inverterSNInput = document.getElementById('inverterSN');
             const panelModelInput = document.getElementById('panelModel');
@@ -331,16 +335,13 @@
             let customers = [];
             let confirmCallback = null;
 
-            // Load saved logo from localStorage
             const savedLogo = localStorage.getItem('appLogo');
             if (savedLogo) {
                 appLogo.src = savedLogo;
             }
 
-            // Global variable for the current date (real or simulated)
             let currentDate = new Date();
             
-            // Function to display the current date in Thai
             const displayCurrentDate = () => {
                 const dateToDisplay = testDateInput.value ? new Date(testDateInput.value) : currentDate;
                 const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
@@ -348,7 +349,6 @@
                 currentDateDisplay.textContent = `วันที่ปัจจุบัน: ${formattedDate}`;
             };
             
-            // Function to set the startDate input to today's date
             const setToday = () => {
                 const today = new Date();
                 const year = today.getFullYear();
@@ -357,7 +357,6 @@
                 startDateInput.value = `${year}-${month}-${day}`;
             };
 
-            // Custom alert function
             const showMessage = (message) => {
                 messageBox.textContent = message;
                 messageBox.classList.remove('hidden');
@@ -366,7 +365,6 @@
                 }, 3000);
             };
 
-            // Custom confirmation function
             const showConfirm = (message, callback) => {
                 confirmMessage.textContent = message;
                 confirmModal.classList.add('active');
@@ -387,10 +385,6 @@
                 }
             });
             
-            // Function to generate a unique ID
-            const generateId = () => `customer_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-            // Function to handle image file selection and conversion to Base64
             const handleImageUpload = (input, previewElement, imageKey) => {
                 const file = input.files[0];
                 if (file) {
@@ -407,7 +401,6 @@
                 }
             };
 
-            // Event listeners for file inputs
             image1Preview.addEventListener('click', () => image1Input.click());
             image2Preview.addEventListener('click', () => image2Input.click());
             image3Preview.addEventListener('click', () => image3Input.click());
@@ -416,7 +409,6 @@
             image2Input.addEventListener('change', () => handleImageUpload(image2Input, image2Preview, 'image2'));
             image3Input.addEventListener('change', () => handleImageUpload(image3Input, image3Preview, 'image3'));
 
-            // Function to reset image previews
             const resetImagePreviews = () => {
                 image1Preview.innerHTML = '<span>เลือกรูปภาพ</span>';
                 image2Preview.innerHTML = '<span>เลือกรูปภาพ</span>';
@@ -426,7 +418,6 @@
                 currentImages.image3 = '';
             };
             
-            // Function to find the next upcoming service date or check for warranty expiration
             const findServiceStatus = (startDate, serviceYears, dateToCheck) => {
                 if (!startDate) return { status: 'ไม่ระบุ', nextDate: 'ไม่ระบุ' };
                 const start = new Date(startDate);
@@ -449,7 +440,6 @@
                 return { status: 'ok', nextDate: 'ยังไม่ถึงกำหนด' };
             };
 
-            // Function to render customer list
             const renderCustomers = (filterDue = false) => {
                 const dateForCheck = testDateInput.value ? new Date(testDateInput.value) : currentDate;
                 const filteredCustomers = filterDue 
@@ -515,7 +505,6 @@
                 });
             };
 
-            // Listener for real-time updates from Firestore
             const listenForCustomers = () => {
                 const customerCollection = collection(db, `artifacts/${appId}/public/data/customers`);
                 onSnapshot(customerCollection, (snapshot) => {
@@ -527,7 +516,6 @@
                 });
             };
 
-            // Event listener for form submission
             customerForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const id = customerIdInput.value;
@@ -547,7 +535,7 @@
                     return;
                 }
                 
-                const newCustomerData = {
+                const customerData = {
                     name,
                     address,
                     phone,
@@ -561,19 +549,16 @@
                     image1: currentImages.image1,
                     image2: currentImages.image2,
                     image3: currentImages.image3,
-                    lastServiceDate: null,
                 };
 
                 try {
                     if (id) {
-                        // Update existing customer
                         const customerDocRef = doc(db, `artifacts/${appId}/public/data/customers`, id);
-                        await setDoc(customerDocRef, newCustomerData);
+                        await updateDoc(customerDocRef, customerData);
                         showMessage('อัปเดตข้อมูลลูกค้าเรียบร้อยแล้ว');
                     } else {
-                        // Add new customer
                         const customerCollection = collection(db, `artifacts/${appId}/public/data/customers`);
-                        await addDoc(customerCollection, newCustomerData);
+                        await addDoc(customerCollection, customerData);
                         showMessage('เพิ่มลูกค้าใหม่เรียบร้อยแล้ว');
                     }
                     customerForm.reset();
@@ -586,7 +571,6 @@
                 }
             });
 
-            // Event listener for edit, delete, and complete service buttons
             customerList.addEventListener('click', async (e) => {
                 const target = e.target;
                 if (target.classList.contains('edit-btn')) {
@@ -605,15 +589,12 @@
                         startDateInput.value = customerToEdit.startDate;
                         serviceYearsInput.value = customerToEdit.serviceYears;
                         
-                        // Set current images and display previews for editing
                         currentImages.image1 = customerToEdit.image1;
                         currentImages.image2 = customerToEdit.image2;
                         currentImages.image3 = customerToEdit.image3;
                         
-                        // Clear existing previews
                         resetImagePreviews();
 
-                        // Display new previews
                         if (customerToEdit.image1) {
                             const img = document.createElement('img');
                             img.src = customerToEdit.image1;
@@ -670,42 +651,34 @@
                 }
             });
             
-            // Event listener for "Set Today" button
             setTodayBtn.addEventListener('click', () => {
                 setToday();
             });
 
-            // Event listener for test date input
             testDateInput.addEventListener('change', () => {
                 displayCurrentDate();
-                // Firestore automatically re-renders on data change, no need to manually call renderCustomers()
             });
 
-            // Event listener for logo upload
             logoUploadInput.addEventListener('change', (e) => {
                 const file = e.target.files[0];
                 if (file) {
                     const reader = new FileReader();
                     reader.onload = (e) => {
                         appLogo.src = e.target.result;
-                        localStorage.setItem('appLogo', e.target.result); // Save logo to localStorage
+                        localStorage.setItem('appLogo', e.target.result);
                     };
                     reader.readAsDataURL(file);
                 }
             });
 
-            // Event listeners for navigation buttons
             showAllCustomersBtn.addEventListener('click', () => {
                 formSection.style.display = 'block';
-                // Firestore listener will handle rendering
             });
 
             showDueCustomersBtn.addEventListener('click', () => {
                 formSection.style.display = 'none';
-                // Firestore listener will handle rendering
             });
 
-            // Initial rendering
             displayCurrentDate();
             listenForCustomers();
         });
