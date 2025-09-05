@@ -275,8 +275,30 @@
         </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, setDoc, deleteDoc, onSnapshot, query, where, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Firebase configuration and initialization
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        
+        let userId = null;
+        
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (typeof __initial_auth_token !== 'undefined') {
+                await signInWithCustomToken(auth, __initial_auth_token);
+            } else {
+                await signInAnonymously(auth);
+            }
+            userId = auth.currentUser.uid;
+            console.log("Authenticated with user ID:", userId);
+            
             const customerForm = document.getElementById('customerForm');
             const customerList = document.getElementById('customerList');
             const customerIdInput = document.getElementById('customerId');
@@ -309,23 +331,34 @@
             const panelCountInput = document.getElementById('panelCount');
 
             let currentImages = { image1: '', image2: '', image3: '' };
+            let customers = [];
             let confirmCallback = null;
 
-            // Load saved data from localStorage
-            const loadData = () => {
-                const customers = JSON.parse(localStorage.getItem('customers')) || [];
-                const logo = localStorage.getItem('appLogo');
-                if (logo) {
-                    appLogo.src = logo;
+            // Load logo from Firestore on startup
+            const logoDocRef = doc(db, `artifacts/${appId}/public/settings/logo`);
+            const logoUnsubscribe = onSnapshot(logoDocRef, (docSnap) => {
+                if (docSnap.exists() && docSnap.data().logo) {
+                    appLogo.src = docSnap.data().logo;
                 } else {
-                     appLogo.src = 'https://placehold.co/250x100/A0A0A0/FFFFFF?text=UDsolarmax+Logo';
+                    appLogo.src = 'https://placehold.co/250x100/A0A0A0/FFFFFF?text=UDsolarmax+Logo';
                 }
-                renderCustomers();
-            };
+            });
 
-            const saveData = (customers) => {
-                localStorage.setItem('customers', JSON.stringify(customers));
-                renderCustomers();
+            let currentDate = new Date();
+            
+            const displayCurrentDate = () => {
+                const dateToDisplay = testDateInput.value ? new Date(testDateInput.value) : currentDate;
+                const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                const formattedDate = dateToDisplay.toLocaleDateString('th-TH', options);
+                currentDateDisplay.textContent = `วันที่ปัจจุบัน: ${formattedDate}`;
+            };
+            
+            const setToday = () => {
+                const today = new Date();
+                const year = today.getFullYear();
+                const month = String(today.getMonth() + 1).padStart(2, '0');
+                const day = String(today.getDate()).padStart(2, '0');
+                startDateInput.value = `${year}-${month}-${day}`;
             };
 
             const showMessage = (message) => {
@@ -419,8 +452,7 @@
             };
 
             const renderCustomers = (filterDue = false) => {
-                const customers = JSON.parse(localStorage.getItem('customers')) || [];
-                const dateForCheck = testDateInput.value ? new Date(testDateInput.value) : new Date();
+                const dateForCheck = testDateInput.value ? new Date(testDateInput.value) : currentDate;
                 const filteredCustomers = filterDue 
                     ? customers.filter(c => findServiceStatus(c.startDate, c.serviceYears, dateForCheck).status === 'due')
                     : customers;
@@ -488,9 +520,19 @@
                 });
             };
 
-            customerForm.addEventListener('submit', (e) => {
+            const listenForCustomers = () => {
+                const customerCollection = collection(db, `artifacts/${appId}/public/data/customers`);
+                onSnapshot(customerCollection, (snapshot) => {
+                    customers = [];
+                    snapshot.forEach(doc => {
+                        customers.push({ id: doc.id, ...doc.data() });
+                    });
+                    renderCustomers();
+                });
+            };
+
+            customerForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                const customers = JSON.parse(localStorage.getItem('customers')) || [];
                 const id = customerIdInput.value;
                 const name = document.getElementById('name').value;
                 const address = document.getElementById('address').value;
@@ -509,7 +551,6 @@
                 }
                 
                 const customerData = {
-                    id: id || Date.now().toString(),
                     name,
                     address,
                     phone,
@@ -525,28 +566,28 @@
                     image3: currentImages.image3,
                 };
 
-                if (id) {
-                    const index = customers.findIndex(c => c.id === id);
-                    if (index > -1) {
-                        customers[index] = customerData;
+                try {
+                    if (id) {
+                        const customerDocRef = doc(db, `artifacts/${appId}/public/data/customers`, id);
+                        await updateDoc(customerDocRef, customerData);
                         showMessage('อัปเดตข้อมูลลูกค้าเรียบร้อยแล้ว');
+                    } else {
+                        const customerCollection = collection(db, `artifacts/${appId}/public/data/customers`);
+                        await addDoc(customerCollection, customerData);
+                        showMessage('เพิ่มลูกค้าใหม่เรียบร้อยแล้ว');
                     }
-                } else {
-                    customers.push(customerData);
-                    showMessage('เพิ่มลูกค้าใหม่เรียบร้อยแล้ว');
+                    customerForm.reset();
+                    resetImagePreviews();
+                    customerIdInput.value = '';
+                    submitBtn.textContent = 'เพิ่มลูกค้า';
+                } catch (error) {
+                    console.error("Error writing document: ", error);
+                    showMessage('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
                 }
-                
-                saveData(customers);
-                customerForm.reset();
-                resetImagePreviews();
-                customerIdInput.value = '';
-                submitBtn.textContent = 'เพิ่มลูกค้า';
             });
 
-            customerList.addEventListener('click', (e) => {
+            customerList.addEventListener('click', async (e) => {
                 const target = e.target;
-                const customers = JSON.parse(localStorage.getItem('customers')) || [];
-
                 if (target.classList.contains('edit-btn')) {
                     const idToEdit = target.getAttribute('data-id');
                     const customerToEdit = customers.find(customer => customer.id === idToEdit);
@@ -569,26 +610,31 @@
                     }
                 } else if (target.classList.contains('delete-btn')) {
                     const idToDelete = target.getAttribute('data-id');
-                    showConfirm('คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลลูกค้ารายนี้?', (result) => {
+                    showConfirm('คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลลูกค้ารายนี้?', async (result) => {
                         if (result) {
-                            const updatedCustomers = customers.filter(c => c.id !== idToDelete);
-                            saveData(updatedCustomers);
-                            showMessage('ลบข้อมูลลูกค้าเรียบร้อยแล้ว');
+                            try {
+                                await deleteDoc(doc(db, `artifacts/${appId}/public/data/customers`, idToDelete));
+                                showMessage('ลบข้อมูลลูกค้าเรียบร้อยแล้ว');
+                            } catch (error) {
+                                console.error("Error removing document: ", error);
+                                showMessage('เกิดข้อผิดพลาดในการลบข้อมูล');
+                            }
                         }
                     });
                 } else if (target.classList.contains('complete-service-btn')) {
                     const idToComplete = target.getAttribute('data-id');
-                    showConfirm('คุณแน่ใจหรือไม่ว่าต้องการบันทึกว่าการเซอร์วิสนี้เสร็จสิ้นแล้ว?', (result) => {
+                    showConfirm('คุณแน่ใจหรือไม่ว่าต้องการบันทึกว่าการเซอร์วิสนี้เสร็จสิ้นแล้ว?', async (result) => {
                         if (result) {
-                            const updatedCustomers = customers.map(c => {
-                                if (c.id === idToComplete) {
-                                    const todayISO = (testDateInput.value ? new Date(testDateInput.value) : new Date()).toISOString().split('T')[0];
-                                    return { ...c, lastServiceDate: todayISO };
-                                }
-                                return c;
-                            });
-                            saveData(updatedCustomers);
-                            showMessage('บันทึกการเซอร์วิสเรียบร้อยแล้ว');
+                            try {
+                                const dateForCheck = testDateInput.value ? new Date(testDateInput.value) : currentDate;
+                                const todayISO = dateForCheck.toISOString().split('T')[0];
+                                const customerDocRef = doc(db, `artifacts/${appId}/public/data/customers`, idToComplete);
+                                await updateDoc(customerDocRef, { lastServiceDate: todayISO });
+                                showMessage('บันทึกการเซอร์วิสเรียบร้อยแล้ว');
+                            } catch (error) {
+                                console.error("Error updating document: ", error);
+                                showMessage('เกิดข้อผิดพลาดในการบันทึกการเซอร์วิส');
+                            }
                         }
                     });
                 }
@@ -603,14 +649,19 @@
                 renderCustomers(document.getElementById('showDueCustomersBtn').classList.contains('active'));
             });
 
-            logoUploadInput.addEventListener('change', (e) => {
+            logoUploadInput.addEventListener('change', async (e) => {
                 const file = e.target.files[0];
                 if (file) {
                     const reader = new FileReader();
-                    reader.onload = (e) => {
-                        localStorage.setItem('appLogo', e.target.result);
-                        appLogo.src = e.target.result;
-                        showMessage('บันทึกโลโก้เรียบร้อยแล้ว');
+                    reader.onload = async (e) => {
+                        const logoData = { logo: e.target.result };
+                        try {
+                            await setDoc(doc(db, `artifacts/${appId}/public/settings/logo`), logoData);
+                            showMessage('บันทึกโลโก้เรียบร้อยแล้ว');
+                        } catch (error) {
+                            console.error("Error uploading logo: ", error);
+                            showMessage('เกิดข้อผิดพลาดในการอัปโหลดโลโก้');
+                        }
                     };
                     reader.readAsDataURL(file);
                 }
@@ -625,9 +676,9 @@
                 formSection.style.display = 'none';
                 renderCustomers(true);
             });
-            
-            // Initial load
-            loadData();
+
+            displayCurrentDate();
+            listenForCustomers();
         });
     </script>
 </body>
