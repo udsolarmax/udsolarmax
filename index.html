@@ -337,10 +337,14 @@
         let filteredCustomers = customers;
         if (filter === 'service') {
             filteredCustomers = customers.filter(customer => {
-                const serviceDate = new Date(customer.nextServiceDate);
-                const differenceInTime = serviceDate.getTime() - today.getTime();
+                const installDate = new Date(customer.installDate);
+                const serviceInterval = parseInt(customer.serviceInterval) || 0;
+                const nextServiceDate = new Date(installDate.getFullYear() + serviceInterval, installDate.getMonth(), installDate.getDate());
+                
+                const differenceInTime = nextServiceDate.getTime() - today.getTime();
                 const differenceInDays = differenceInTime / (1000 * 3600 * 24);
-                return differenceInDays >= 0 && differenceInDays <= 30;
+                
+                return differenceInDays >= 0 && differenceInDays <= 365; // Show customers with service due in the next year
             });
         }
         
@@ -349,7 +353,7 @@
         } else {
             filteredCustomers.forEach(customer => {
                 const installDate = new Date(customer.installDate);
-                const serviceInterval = parseInt(customer.serviceInterval);
+                const serviceInterval = parseInt(customer.serviceInterval) || 0;
                 const nextServiceDate = new Date(installDate.getFullYear() + serviceInterval, installDate.getMonth(), installDate.getDate());
                 const isServiceDue = today >= nextServiceDate;
                 const isWarrantyExpired = today > new Date(installDate.getFullYear() + serviceInterval, installDate.getMonth(), installDate.getDate());
