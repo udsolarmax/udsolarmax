@@ -195,10 +195,26 @@
                 <label for="phone">เบอร์โทรศัพท์</label>
                 <input type="tel" id="phone" placeholder="กรุณากรอกเบอร์โทรศัพท์">
             </div>
-            <!-- New Google Maps Link Input -->
             <div class="input-group">
                 <label for="googleMapsLink">ลิงก์ Google Maps</label>
                 <input type="url" id="googleMapsLink" placeholder="วางลิงก์ Google Maps ที่นี่">
+            </div>
+            <!-- New input fields for installed equipment -->
+            <div class="input-group">
+                <label for="inverterModel">รุ่นอินเวอร์เตอร์</label>
+                <input type="text" id="inverterModel" placeholder="กรอกรุ่นอินเวอร์เตอร์">
+            </div>
+            <div class="input-group">
+                <label for="inverterSN">เลข SN อินเวอร์เตอร์</label>
+                <input type="text" id="inverterSN" placeholder="กรอกเลข SN อินเวอร์เตอร์">
+            </div>
+            <div class="input-group">
+                <label for="panelModel">รุ่นแผง</label>
+                <input type="text" id="panelModel" placeholder="กรอกรุ่นแผง">
+            </div>
+            <div class="input-group">
+                <label for="panelCount">จำนวนแผงที่ติดตั้ง</label>
+                <input type="number" id="panelCount" min="0" placeholder="กรอกจำนวนแผง">
             </div>
             <div class="input-group">
                 <label for="startDate">วันที่ติดตั้งระบบ</label>
@@ -274,6 +290,12 @@
             const showDueCustomersBtn = document.getElementById('showDueCustomersBtn');
             const formSection = document.getElementById('customerForm');
             const googleMapsLinkInput = document.getElementById('googleMapsLink');
+
+            // New input fields
+            const inverterModelInput = document.getElementById('inverterModel');
+            const inverterSNInput = document.getElementById('inverterSN');
+            const panelModelInput = document.getElementById('panelModel');
+            const panelCountInput = document.getElementById('panelCount');
 
             let currentImages = { image1: '', image2: '' };
             let customers = JSON.parse(localStorage.getItem('customers')) || [];
@@ -422,6 +444,10 @@
                         <p><strong>เบอร์โทรศัพท์:</strong> ${customer.phone || 'ไม่ระบุ'}</p>
                         ${customer.googleMapsLink ? `<p><a href="${customer.googleMapsLink}" target="_blank" class="text-blue-500 hover:underline">ดูแผนที่</a></p>` : ''}
                         <p><strong>วันที่ติดตั้ง:</strong> ${customer.startDate || 'ไม่ระบุ'}</p>
+                        <p><strong>รุ่นอินเวอร์เตอร์:</strong> ${customer.inverterModel || 'ไม่ระบุ'}</p>
+                        <p><strong>เลข SN อินเวอร์เตอร์:</strong> ${customer.inverterSN || 'ไม่ระบุ'}</p>
+                        <p><strong>รุ่นแผง:</strong> ${customer.panelModel || 'ไม่ระบุ'}</p>
+                        <p><strong>จำนวนแผง:</strong> ${customer.panelCount || 'ไม่ระบุ'}</p>
                         ${customer.lastServiceDate ? `<p><strong>บริการครั้งล่าสุด:</strong> ${customer.lastServiceDate}</p>` : ''}
                         <p><strong>ระยะเวลาการเซอร์วิส:</strong> ${customer.serviceYears || 'ไม่ระบุ'} ปี</p>
                         <p class="font-bold ${isDue ? 'text-red-500' : 'text-green-600'}">
@@ -453,6 +479,10 @@
                 const address = document.getElementById('address').value;
                 const phone = document.getElementById('phone').value;
                 const googleMapsLink = googleMapsLinkInput.value;
+                const inverterModel = inverterModelInput.value;
+                const inverterSN = inverterSNInput.value;
+                const panelModel = panelModelInput.value;
+                const panelCount = panelCountInput.value;
                 const startDate = startDateInput.value;
                 const serviceYears = parseInt(serviceYearsInput.value, 10);
 
@@ -469,6 +499,10 @@
                         customers[customerIndex].address = address;
                         customers[customerIndex].phone = phone;
                         customers[customerIndex].googleMapsLink = googleMapsLink;
+                        customers[customerIndex].inverterModel = inverterModel;
+                        customers[customerIndex].inverterSN = inverterSN;
+                        customers[customerIndex].panelModel = panelModel;
+                        customers[customerIndex].panelCount = panelCount;
                         customers[customerIndex].startDate = startDate;
                         customers[customerIndex].serviceYears = serviceYears;
                         customers[customerIndex].image1 = currentImages.image1;
@@ -480,7 +514,7 @@
                     submitBtn.textContent = 'เพิ่มลูกค้า';
                 } else {
                     // Add new customer
-                    const newCustomer = { id: generateId(), name, address, phone, googleMapsLink, startDate, serviceYears, lastServiceDate: null, image1: currentImages.image1, image2: currentImages.image2 };
+                    const newCustomer = { id: generateId(), name, address, phone, googleMapsLink, inverterModel, inverterSN, panelModel, panelCount, startDate, serviceYears, lastServiceDate: null, image1: currentImages.image1, image2: currentImages.image2 };
                     customers.push(newCustomer);
                     customerForm.reset();
                     resetImagePreviews();
@@ -502,6 +536,10 @@
                         document.getElementById('address').value = customerToEdit.address;
                         document.getElementById('phone').value = customerToEdit.phone;
                         googleMapsLinkInput.value = customerToEdit.googleMapsLink;
+                        inverterModelInput.value = customerToEdit.inverterModel;
+                        inverterSNInput.value = customerToEdit.inverterSN;
+                        panelModelInput.value = customerToEdit.panelModel;
+                        panelCountInput.value = customerToEdit.panelCount;
                         startDateInput.value = customerToEdit.startDate;
                         serviceYearsInput.value = customerToEdit.serviceYears;
                         
@@ -595,4 +633,3 @@
     </script>
 </body>
 </html>
-
