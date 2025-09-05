@@ -529,7 +529,7 @@
             };
 
             const listenForCustomers = () => {
-                const customerCollection = collection(db, `artifacts/${appId}/public/data/customers`);
+                const customerCollection = collection(db, `artifacts/${appId}/public/data/Promtong`);
                 onSnapshot(customerCollection, (snapshot) => {
                     customers = [];
                     snapshot.forEach(doc => {
@@ -576,11 +576,11 @@
 
                 try {
                     if (id) {
-                        const customerDocRef = doc(db, `artifacts/${appId}/public/data/customers`, id);
+                        const customerDocRef = doc(db, `artifacts/${appId}/public/data/Promtong`, id);
                         await updateDoc(customerDocRef, customerData);
                         showMessage('อัปเดตข้อมูลลูกค้าเรียบร้อยแล้ว');
                     } else {
-                        const customerCollection = collection(db, `artifacts/${appId}/public/data/customers`);
+                        const customerCollection = collection(db, `artifacts/${appId}/public/data/Promtong`);
                         await addDoc(customerCollection, customerData);
                         showMessage('เพิ่มลูกค้าใหม่เรียบร้อยแล้ว');
                     }
@@ -621,7 +621,7 @@
                     showConfirm('คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลลูกค้ารายนี้?', async (result) => {
                         if (result) {
                             try {
-                                await deleteDoc(doc(db, `artifacts/${appId}/public/data/customers`, idToDelete));
+                                await deleteDoc(doc(db, `artifacts/${appId}/public/data/Promtong`, idToDelete));
                                 showMessage('ลบข้อมูลลูกค้าเรียบร้อยแล้ว');
                             } catch (error) {
                                 console.error("Error removing document: ", error);
@@ -636,7 +636,7 @@
                             try {
                                 const dateForCheck = testDateInput.value ? new Date(testDateInput.value) : currentDate;
                                 const todayISO = dateForCheck.toISOString().split('T')[0];
-                                const customerDocRef = doc(db, `artifacts/${appId}/public/data/customers`, idToComplete);
+                                const customerDocRef = doc(db, `artifacts/${appId}/public/data/Promtong`, idToComplete);
                                 await updateDoc(customerDocRef, { lastServiceDate: todayISO });
                                 showMessage('บันทึกการเซอร์วิสเรียบร้อยแล้ว');
                             } catch (error) {
