@@ -224,9 +224,8 @@
 
 <script>
     // Import Firebase services
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-    import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, deleteDoc, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+    import { initializeApp } from "firebase/app";
+    import { getAnalytics } from "firebase/analytics";
 
     // Firebase Configuration (Replace with your actual config)
     const firebaseConfig = {
@@ -236,12 +235,12 @@
       storageBucket: "udsolarmaxservice.firebasestorage.app",
       messagingSenderId: "701138550265",
       appId: "1:701138550265:web:2467a654ff30e0c9a25128"
+      measurementId: "G-TJ725GT0NW"
     };
 
-    // Initialize Firebase
+// Initialize Firebase
     const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const auth = getAuth(app);
+    const analytics = getAnalytics(app);
     
     // UI elements and variables
     const form = document.getElementById('customer-form');
