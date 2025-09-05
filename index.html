@@ -275,8 +275,25 @@
         </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, setDoc, deleteDoc, onSnapshot, query, where, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Firebase configuration and initialization
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        let userId = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await signInAnonymously(auth);
+            userId = auth.currentUser.uid;
+            console.log("Authenticated with user ID:", userId);
+
             const customerForm = document.getElementById('customerForm');
             const customerList = document.getElementById('customerList');
             const customerIdInput = document.getElementById('customerId');
@@ -311,7 +328,7 @@
             const panelCountInput = document.getElementById('panelCount');
 
             let currentImages = { image1: '', image2: '', image3: '' };
-            let customers = JSON.parse(localStorage.getItem('customers')) || [];
+            let customers = [];
             let confirmCallback = null;
 
             // Load saved logo from localStorage
@@ -498,8 +515,20 @@
                 });
             };
 
+            // Listener for real-time updates from Firestore
+            const listenForCustomers = () => {
+                const customerCollection = collection(db, `artifacts/${appId}/public/data/customers`);
+                onSnapshot(customerCollection, (snapshot) => {
+                    customers = [];
+                    snapshot.forEach(doc => {
+                        customers.push({ id: doc.id, ...doc.data() });
+                    });
+                    renderCustomers();
+                });
+            };
+
             // Event listener for form submission
-            customerForm.addEventListener('submit', (e) => {
+            customerForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const id = customerIdInput.value;
                 const name = document.getElementById('name').value;
@@ -517,43 +546,48 @@
                     showMessage('กรุณากรอกชื่อลูกค้า');
                     return;
                 }
-
-                if (id) {
-                    // Update existing customer
-                    const customerIndex = customers.findIndex(c => c.id === id);
-                    if (customerIndex !== -1) {
-                        customers[customerIndex].name = name;
-                        customers[customerIndex].address = address;
-                        customers[customerIndex].phone = phone;
-                        customers[customerIndex].googleMapsLink = googleMapsLink;
-                        customers[customerIndex].inverterModel = inverterModel;
-                        customers[customerIndex].inverterSN = inverterSN;
-                        customers[customerIndex].panelModel = panelModel;
-                        customers[customerIndex].panelCount = panelCount;
-                        customers[customerIndex].startDate = startDate;
-                        customers[customerIndex].serviceYears = serviceYears;
-                        customers[customerIndex].image1 = currentImages.image1;
-                        customers[customerIndex].image2 = currentImages.image2;
-                        customers[customerIndex].image3 = currentImages.image3;
-                    }
-                    customerIdInput.value = '';
-                    customerForm.reset();
-                    resetImagePreviews();
-                    submitBtn.textContent = 'เพิ่มลูกค้า';
-                } else {
-                    // Add new customer
-                    const newCustomer = { id: generateId(), name, address, phone, googleMapsLink, inverterModel, inverterSN, panelModel, panelCount, startDate, serviceYears, lastServiceDate: null, image1: currentImages.image1, image2: currentImages.image2, image3: currentImages.image3 };
-                    customers.push(newCustomer);
-                    customerForm.reset();
-                    resetImagePreviews();
-                }
                 
-                localStorage.setItem('customers', JSON.stringify(customers));
-                renderCustomers();
+                const newCustomerData = {
+                    name,
+                    address,
+                    phone,
+                    googleMapsLink,
+                    inverterModel,
+                    inverterSN,
+                    panelModel,
+                    panelCount,
+                    startDate,
+                    serviceYears,
+                    image1: currentImages.image1,
+                    image2: currentImages.image2,
+                    image3: currentImages.image3,
+                    lastServiceDate: null,
+                };
+
+                try {
+                    if (id) {
+                        // Update existing customer
+                        const customerDocRef = doc(db, `artifacts/${appId}/public/data/customers`, id);
+                        await setDoc(customerDocRef, newCustomerData);
+                        showMessage('อัปเดตข้อมูลลูกค้าเรียบร้อยแล้ว');
+                    } else {
+                        // Add new customer
+                        const customerCollection = collection(db, `artifacts/${appId}/public/data/customers`);
+                        await addDoc(customerCollection, newCustomerData);
+                        showMessage('เพิ่มลูกค้าใหม่เรียบร้อยแล้ว');
+                    }
+                    customerForm.reset();
+                    resetImagePreviews();
+                    customerIdInput.value = '';
+                    submitBtn.textContent = 'เพิ่มลูกค้า';
+                } catch (error) {
+                    console.error("Error writing document: ", error);
+                    showMessage('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+                }
             });
 
             // Event listener for edit, delete, and complete service buttons
-            customerList.addEventListener('click', (e) => {
+            customerList.addEventListener('click', async (e) => {
                 const target = e.target;
                 if (target.classList.contains('edit-btn')) {
                     const idToEdit = target.getAttribute('data-id');
@@ -606,22 +640,31 @@
                     }
                 } else if (target.classList.contains('delete-btn')) {
                     const idToDelete = target.getAttribute('data-id');
-                    showConfirm('คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลลูกค้ารายนี้?', (result) => {
+                    showConfirm('คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลลูกค้ารายนี้?', async (result) => {
                         if (result) {
-                            customers = customers.filter(customer => customer.id !== idToDelete);
-                            localStorage.setItem('customers', JSON.stringify(customers));
-                            renderCustomers();
+                            try {
+                                await deleteDoc(doc(db, `artifacts/${appId}/public/data/customers`, idToDelete));
+                                showMessage('ลบข้อมูลลูกค้าเรียบร้อยแล้ว');
+                            } catch (error) {
+                                console.error("Error removing document: ", error);
+                                showMessage('เกิดข้อผิดพลาดในการลบข้อมูล');
+                            }
                         }
                     });
                 } else if (target.classList.contains('complete-service-btn')) {
                     const idToComplete = target.getAttribute('data-id');
-                    showConfirm('คุณแน่ใจหรือไม่ว่าต้องการบันทึกว่าการเซอร์วิสนี้เสร็จสิ้นแล้ว?', (result) => {
+                    showConfirm('คุณแน่ใจหรือไม่ว่าต้องการบันทึกว่าการเซอร์วิสนี้เสร็จสิ้นแล้ว?', async (result) => {
                         if (result) {
-                            const dateForCheck = testDateInput.value ? new Date(testDateInput.value) : currentDate;
-                            const todayISO = dateForCheck.toISOString().split('T')[0];
-                            customers = customers.map(customer => customer.id === idToComplete ? { ...customer, lastServiceDate: todayISO } : customer);
-                            localStorage.setItem('customers', JSON.stringify(customers));
-                            renderCustomers();
+                            try {
+                                const dateForCheck = testDateInput.value ? new Date(testDateInput.value) : currentDate;
+                                const todayISO = dateForCheck.toISOString().split('T')[0];
+                                const customerDocRef = doc(db, `artifacts/${appId}/public/data/customers`, idToComplete);
+                                await updateDoc(customerDocRef, { lastServiceDate: todayISO });
+                                showMessage('บันทึกการเซอร์วิสเรียบร้อยแล้ว');
+                            } catch (error) {
+                                console.error("Error updating document: ", error);
+                                showMessage('เกิดข้อผิดพลาดในการบันทึกการเซอร์วิส');
+                            }
                         }
                     });
                 }
@@ -635,7 +678,7 @@
             // Event listener for test date input
             testDateInput.addEventListener('change', () => {
                 displayCurrentDate();
-                renderCustomers();
+                // Firestore automatically re-renders on data change, no need to manually call renderCustomers()
             });
 
             // Event listener for logo upload
@@ -654,17 +697,17 @@
             // Event listeners for navigation buttons
             showAllCustomersBtn.addEventListener('click', () => {
                 formSection.style.display = 'block';
-                renderCustomers(false);
+                // Firestore listener will handle rendering
             });
 
             showDueCustomersBtn.addEventListener('click', () => {
                 formSection.style.display = 'none';
-                renderCustomers(true);
+                // Firestore listener will handle rendering
             });
 
             // Initial rendering
             displayCurrentDate();
-            renderCustomers();
+            listenForCustomers();
         });
     </script>
 </body>
