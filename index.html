@@ -436,7 +436,7 @@
             const renderCustomers = (filterDue = false) => {
                 const dateForCheck = testDateInput.value ? new Date(testDateInput.value) : currentDate;
                 const filteredCustomers = filterDue 
-                    ? customers.filter(c => findServiceStatus(c.startDate, c.serviceYears, dateForCheck).status === 'due' || findServiceStatus(c.startDate, c.serviceYears, dateForCheck).status === 'expired')
+                    ? customers.filter(c => findServiceStatus(c.startDate, c.serviceYears, dateForCheck).status === 'due')
                     : customers;
 
                 customerList.innerHTML = `<h2 class="text-2xl font-semibold mb-4 text-gray-700">รายการลูกค้า</h2>`;
@@ -454,7 +454,7 @@
                     
                     let nextServiceText = `<strong>นัดเซอร์วิสครั้งต่อไป:</strong> ${nextDate}`;
                     if (status === 'expired') {
-                        nextServiceText = `<p class="warranty-expired-text"><strong>${nextDate}</strong></p>`;
+                         nextServiceText = `<p class="warranty-expired-text"><strong>${nextDate}</strong></p>`;
                     } else if (status === 'due') {
                         nextServiceText = `<p class="font-bold text-red-500"><strong>นัดเซอร์วิสครั้งต่อไป:</strong> ${nextDate}</p>`;
                     }
