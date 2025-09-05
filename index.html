@@ -28,7 +28,7 @@
             font-weight: 500;
             color: #4b5563;
         }
-        .input-group input[type="text"], .input-group input[type="tel"], .input-group input[type="date"], .input-group input[type="number"] {
+        .input-group input[type="text"], .input-group input[type="tel"], .input-group input[type="date"], .input-group input[type="number"], .input-group input[type="url"] {
             width: 100%;
             padding: 0.75rem;
             border-radius: 8px;
@@ -145,6 +145,10 @@
             50% { transform: scale(1.02); }
             100% { transform: scale(1); }
         }
+        .warranty-expired-text {
+            color: #ef4444; /* red-500 */
+            animation: pulse 1.5s infinite;
+        }
     </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
@@ -243,6 +247,13 @@
                     </div>
                 </div>
             </div>
+            <div class="input-group mt-4">
+                <label for="image3" class="mb-2 block">รูปภาพ 3 (แนวนอน)</label>
+                <div id="image3Preview" class="w-full h-48 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center p-2 text-sm text-gray-500 overflow-hidden cursor-pointer relative">
+                    <span>เลือกรูปภาพ</span>
+                    <input type="file" id="image3" class="hidden" accept="image/*">
+                </div>
+            </div>
             <button type="submit" class="btn btn-primary w-full mt-4">เพิ่มลูกค้า</button>
         </form>
 
@@ -271,8 +282,10 @@
             const customerIdInput = document.getElementById('customerId');
             const image1Input = document.getElementById('image1');
             const image2Input = document.getElementById('image2');
+            const image3Input = document.getElementById('image3');
             const image1Preview = document.getElementById('image1Preview');
             const image2Preview = document.getElementById('image2Preview');
+            const image3Preview = document.getElementById('image3Preview');
             const messageBox = document.getElementById('messageBox');
             const confirmModal = document.getElementById('confirmModal');
             const confirmMessage = document.getElementById('confirmMessage');
@@ -297,7 +310,7 @@
             const panelModelInput = document.getElementById('panelModel');
             const panelCountInput = document.getElementById('panelCount');
 
-            let currentImages = { image1: '', image2: '' };
+            let currentImages = { image1: '', image2: '', image3: '' };
             let customers = JSON.parse(localStorage.getItem('customers')) || [];
             let confirmCallback = null;
 
@@ -380,49 +393,50 @@
             // Event listeners for file inputs
             image1Preview.addEventListener('click', () => image1Input.click());
             image2Preview.addEventListener('click', () => image2Input.click());
+            image3Preview.addEventListener('click', () => image3Input.click());
             
             image1Input.addEventListener('change', () => handleImageUpload(image1Input, image1Preview, 'image1'));
             image2Input.addEventListener('change', () => handleImageUpload(image2Input, image2Preview, 'image2'));
+            image3Input.addEventListener('change', () => handleImageUpload(image3Input, image3Preview, 'image3'));
 
             // Function to reset image previews
             const resetImagePreviews = () => {
                 image1Preview.innerHTML = '<span>เลือกรูปภาพ</span>';
                 image2Preview.innerHTML = '<span>เลือกรูปภาพ</span>';
+                image3Preview.innerHTML = '<span>เลือกรูปภาพ</span>';
                 currentImages.image1 = '';
                 currentImages.image2 = '';
+                currentImages.image3 = '';
             };
             
-            // Function to find the next upcoming service date
-            const findNextDueServiceDate = (startDate, serviceYears, dateToCheck) => {
-                if (!startDate) return null;
+            // Function to find the next upcoming service date or check for warranty expiration
+            const findServiceStatus = (startDate, serviceYears, dateToCheck) => {
+                if (!startDate) return { status: 'ไม่ระบุ', nextDate: 'ไม่ระบุ' };
                 const start = new Date(startDate);
+                const warrantyEnd = new Date(start);
+                warrantyEnd.setFullYear(start.getFullYear() + serviceYears);
                 
+                if (dateToCheck.getTime() > warrantyEnd.getTime()) {
+                    return { status: 'expired', nextDate: 'หมดระยะเวลาประกันแล้ว' };
+                }
+
                 for (let i = 1; i <= serviceYears; i++) {
                     const serviceDate = new Date(start);
                     serviceDate.setFullYear(start.getFullYear() + i);
                     
-                    // Check if the service date is in the future or within the last 30 days
                     const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000;
                     if (serviceDate.getTime() >= dateToCheck.getTime() - thirtyDaysInMs) {
-                        return serviceDate.toISOString().split('T')[0];
+                        return { status: 'due', nextDate: serviceDate.toISOString().split('T')[0] };
                     }
                 }
-                return 'รอบเซอร์วิสครบแล้ว';
-            };
-
-            // Function to check if a service is due
-            const isServiceDue = (nextServiceDate, dateToCheck) => {
-                if (!nextServiceDate || nextServiceDate === 'รอบเซอร์วิสครบแล้ว') return false;
-                const due = new Date(nextServiceDate);
-                const thirtyDays = 30 * 24 * 60 * 60 * 1000;
-                return due.getTime() <= dateToCheck.getTime() + thirtyDays;
+                return { status: 'ok', nextDate: 'ยังไม่ถึงกำหนด' };
             };
 
             // Function to render customer list
             const renderCustomers = (filterDue = false) => {
                 const dateForCheck = testDateInput.value ? new Date(testDateInput.value) : currentDate;
                 const filteredCustomers = filterDue 
-                    ? customers.filter(c => isServiceDue(findNextDueServiceDate(c.startDate, c.serviceYears, dateForCheck), dateForCheck))
+                    ? customers.filter(c => findServiceStatus(c.startDate, c.serviceYears, dateForCheck).status === 'due' || findServiceStatus(c.startDate, c.serviceYears, dateForCheck).status === 'expired')
                     : customers;
 
                 customerList.innerHTML = `<h2 class="text-2xl font-semibold mb-4 text-gray-700">รายการลูกค้า</h2>`;
@@ -432,12 +446,19 @@
                 }
                 
                 filteredCustomers.forEach(customer => {
-                    const nextService = findNextDueServiceDate(customer.startDate, customer.serviceYears, dateForCheck);
-                    const dueStatus = isServiceDue(nextService, dateForCheck) ? 'service-due' : '';
-                    const isDue = isServiceDue(nextService, dateForCheck);
+                    const { status, nextDate } = findServiceStatus(customer.startDate, customer.serviceYears, dateForCheck);
+                    const dueStatus = status === 'due' ? 'service-due' : '';
 
                     const customerCard = document.createElement('div');
                     customerCard.className = `customer-card ${dueStatus}`;
+                    
+                    let nextServiceText = `<strong>นัดเซอร์วิสครั้งต่อไป:</strong> ${nextDate}`;
+                    if (status === 'expired') {
+                        nextServiceText = `<p class="warranty-expired-text"><strong>${nextDate}</strong></p>`;
+                    } else if (status === 'due') {
+                        nextServiceText = `<p class="font-bold text-red-500"><strong>นัดเซอร์วิสครั้งต่อไป:</strong> ${nextDate}</p>`;
+                    }
+
                     customerCard.innerHTML = `
                         <h3 class="text-xl font-semibold">${customer.name}</h3>
                         <p><strong>ที่อยู่:</strong> ${customer.address || 'ไม่ระบุ'}</p>
@@ -450,9 +471,7 @@
                         <p><strong>จำนวนแผง:</strong> ${customer.panelCount || 'ไม่ระบุ'}</p>
                         ${customer.lastServiceDate ? `<p><strong>บริการครั้งล่าสุด:</strong> ${customer.lastServiceDate}</p>` : ''}
                         <p><strong>ระยะเวลาการเซอร์วิส:</strong> ${customer.serviceYears || 'ไม่ระบุ'} ปี</p>
-                        <p class="font-bold ${isDue ? 'text-red-500' : 'text-green-600'}">
-                            <strong>นัดเซอร์วิสครั้งต่อไป:</strong> ${nextService || 'ไม่ระบุ'}
-                        </p>
+                        ${nextServiceText}
                         <div class="grid grid-cols-2 gap-2 mt-4">
                             <div class="h-32">
                                 ${customer.image1 ? `<img src="${customer.image1}" class="rounded-lg w-full h-full object-cover" alt="รูปภาพลูกค้า 1">` : '<div class="w-full h-full bg-gray-200 rounded-lg flex items-center justify-center p-2 text-sm text-gray-500">ไม่มีรูปภาพ 1</div>'}
@@ -461,10 +480,15 @@
                                 ${customer.image2 ? `<img src="${customer.image2}" class="rounded-lg w-full h-full object-cover" alt="รูปภาพลูกค้า 2">` : '<div class="w-full h-full bg-gray-200 rounded-lg flex items-center justify-center p-2 text-sm text-gray-500">ไม่มีรูปภาพ 2</div>'}
                             </div>
                         </div>
+                        <div class="mt-4">
+                            <div class="w-full h-48 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center p-2 text-sm text-gray-500 overflow-hidden relative">
+                                ${customer.image3 ? `<img src="${customer.image3}" class="w-full h-full object-cover" alt="รูปภาพลูกค้า 3">` : 'ไม่มีรูปภาพ 3'}
+                            </div>
+                        </div>
                         <div class="mt-4 flex space-x-2">
                             <button class="btn btn-primary edit-btn" data-id="${customer.id}">แก้ไข</button>
                             <button class="btn btn-danger delete-btn" data-id="${customer.id}">ลบ</button>
-                            ${isDue ? `<button class="btn btn-success complete-service-btn" data-id="${customer.id}">บริการแล้ว</button>` : ''}
+                            ${status === 'due' ? `<button class="btn btn-success complete-service-btn" data-id="${customer.id}">บริการแล้ว</button>` : ''}
                         </div>
                     `;
                     customerList.appendChild(customerCard);
@@ -507,6 +531,7 @@
                         customers[customerIndex].serviceYears = serviceYears;
                         customers[customerIndex].image1 = currentImages.image1;
                         customers[customerIndex].image2 = currentImages.image2;
+                        customers[customerIndex].image3 = currentImages.image3;
                     }
                     customerIdInput.value = '';
                     customerForm.reset();
@@ -514,7 +539,7 @@
                     submitBtn.textContent = 'เพิ่มลูกค้า';
                 } else {
                     // Add new customer
-                    const newCustomer = { id: generateId(), name, address, phone, googleMapsLink, inverterModel, inverterSN, panelModel, panelCount, startDate, serviceYears, lastServiceDate: null, image1: currentImages.image1, image2: currentImages.image2 };
+                    const newCustomer = { id: generateId(), name, address, phone, googleMapsLink, inverterModel, inverterSN, panelModel, panelCount, startDate, serviceYears, lastServiceDate: null, image1: currentImages.image1, image2: currentImages.image2, image3: currentImages.image3 };
                     customers.push(newCustomer);
                     customerForm.reset();
                     resetImagePreviews();
@@ -546,6 +571,7 @@
                         // Set current images and display previews for editing
                         currentImages.image1 = customerToEdit.image1;
                         currentImages.image2 = customerToEdit.image2;
+                        currentImages.image3 = customerToEdit.image3;
                         
                         // Clear existing previews
                         resetImagePreviews();
@@ -564,6 +590,13 @@
                             img.className = "w-full h-full object-cover";
                             image2Preview.innerHTML = '';
                             image2Preview.appendChild(img);
+                        }
+                        if (customerToEdit.image3) {
+                            const img = document.createElement('img');
+                            img.src = customerToEdit.image3;
+                            img.className = "w-full h-full object-cover";
+                            image3Preview.innerHTML = '';
+                            image3Preview.appendChild(img);
                         }
 
                         submitBtn.textContent = 'บันทึกการแก้ไข';
@@ -633,3 +666,4 @@
     </script>
 </body>
 </html>
+
