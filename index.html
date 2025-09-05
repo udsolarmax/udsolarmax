@@ -1,700 +1,300 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>จัดการข้อมูลลูกค้า</title>
+    <title>Customer Management System</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts - Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #fee2e2;
+            background-color: #f3f4f6;
         }
         .container {
-            max-width: 800px;
-            margin: 2rem auto;
-            padding: 2rem;
-            background-color: #fff;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-        .input-group {
-            margin-bottom: 1rem;
-        }
-        .input-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            color: #4b5563;
-        }
-        .input-group input[type="text"], .input-group input[type="tel"], .input-group input[type="date"], .input-group input[type="number"], .input-group input[type="url"] {
-            width: 100%;
-            padding: 0.75rem;
-            border-radius: 8px;
-            border: 1px solid #d1d5db;
-            transition: all 0.2s;
-        }
-        .input-group input:focus {
-            outline: none;
-            border-color: #2563eb;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
-        }
-        .btn {
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: background-color 0.2s;
-            cursor: pointer;
-        }
-        .btn-primary {
-            background-color: #2563eb;
-            color: #fff;
-        }
-        .btn-primary:hover {
-            background-color: #1d4ed8;
-        }
-        .btn-danger {
-            background-color: #ef4444;
-            color: #fff;
-        }
-        .btn-danger:hover {
-            background-color: #dc2626;
-        }
-        .btn-success {
-            background-color: #10b981;
-            color: #fff;
-        }
-        .btn-success:hover {
-            background-color: #059669;
-        }
-        .customer-card {
-            background-color: #f9fafb;
-            padding: 1rem;
-            border-radius: 8px;
-            border: 1px solid #e5e7eb;
-            margin-bottom: 1rem;
-        }
-        .customer-card h3 {
-            font-weight: 600;
-            color: #1f2937;
-        }
-        .customer-card p {
-            color: #6b7280;
-            margin-top: 0.25rem;
-        }
-        .customer-card.service-due {
-            background-color: #fef2f2;
-            border-color: #f87171;
-            animation: pulse 1.5s infinite;
-        }
-        .image-preview {
-            width: 100%;
-            height: 120px;
-            border: 2px dashed #d1d5db;
-            border-radius: 8px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: #6b7280;
-            overflow: hidden;
-            cursor: pointer;
-            position: relative;
-        }
-        .image-preview img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            position: absolute;
-        }
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
-        }
-        .modal-overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
-        .modal-content {
-            background-color: #fff;
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-            text-align: center;
-            max-width: 400px;
-            width: 90%;
-            transform: scale(0.95);
-            transition: transform 0.3s ease;
-        }
-        .modal-overlay.active .modal-content {
-            transform: scale(1);
-        }
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-            100% { transform: scale(1); }
-        }
-        .warranty-expired-text {
-            color: #ef4444; /* red-500 */
-            animation: pulse 1.5s infinite;
+            max-width: 960px;
         }
     </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
-    <div class="container shadow-lg">
-        <!-- Logo Header -->
-        <div class="text-center mb-6">
-            <img id="appLogo" src="" alt="App Logo" class="mx-auto" style="max-width: 250px;">
+
+<div class="container bg-white rounded-xl shadow-lg p-6 w-full">
+    <div class="flex items-center justify-between mb-6">
+        <h1 class="text-3xl font-bold text-gray-800">ระบบจัดการข้อมูลลูกค้า</h1>
+    </div>
+    <div id="status-message" class="hidden mb-4 p-3 rounded-lg text-sm text-gray-800 bg-gray-100">
+        <p><span class="font-semibold">User ID:</span> <span id="user-id-display"></span> <i id="copy-icon" class="fa-regular fa-copy cursor-pointer text-gray-500 hover:text-gray-700 ml-2" title="คัดลอก User ID"></i></p>
+    </div>
+
+    <!-- Error/Success Message Display -->
+    <div id="alert-container" class="mb-4"></div>
+
+    <!-- Customer Form -->
+    <form id="customer-form" class="bg-gray-50 rounded-lg p-4 mb-6 shadow-sm">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label for="firstName" class="block text-sm font-medium text-gray-700 mb-1">ชื่อจริง</label>
+                <input type="text" id="firstName" name="firstName" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="ป้อนชื่อจริง" required>
+            </div>
+            <div>
+                <label for="lastName" class="block text-sm font-medium text-gray-700 mb-1">นามสกุล</label>
+                <input type="text" id="lastName" name="lastName" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="ป้อนนามสกุล" required>
+            </div>
+            <div>
+                <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">เบอร์โทรศัพท์</label>
+                <input type="tel" id="phone" name="phone" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="ป้อนเบอร์โทรศัพท์" required>
+            </div>
+            <div>
+                <label for="address" class="block text-sm font-medium text-gray-700 mb-1">ที่อยู่</label>
+                <input type="text" id="address" name="address" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="ป้อนที่อยู่" required>
+            </div>
         </div>
-        
-        <h1 class="text-3xl font-bold mb-6 text-center text-gray-800">จัดการข้อมูลลูกค้า</h1>
+        <button type="submit" class="mt-4 w-full bg-blue-600 text-white py-2 px-4 rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 ease-in-out">
+            เพิ่มลูกค้าใหม่
+        </button>
+    </form>
 
-        <!-- Logo Upload Section -->
-        <div class="mb-6">
-            <label for="logoUpload" class="block text-sm font-medium text-gray-700 mb-2">อัปโหลดโลโก้</label>
-            <input type="file" id="logoUpload" accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-        </div>
-
-        <!-- Navigation Buttons -->
-        <div class="flex justify-center mb-6 space-x-4">
-            <button id="showAllCustomersBtn" class="btn btn-primary">ดูข้อมูลลูกค้าทั้งหมด</button>
-            <button id="showDueCustomersBtn" class="btn btn-danger">ดูรายการเซอร์วิสที่ต้องเตือน</button>
-        </div>
-        
-        <!-- Current Date Display and Test Date Input -->
-        <div class="flex flex-col sm:flex-row justify-between items-center mb-6 text-sm text-gray-500 gap-2">
-            <span id="currentDateDisplay" class="font-medium text-gray-700"></span>
-            <div class="flex items-center gap-2 w-full sm:w-auto">
-                <label for="testDateInput" class="whitespace-nowrap">วันที่จำลอง:</label>
-                <input type="date" id="testDateInput" class="p-2 border rounded-md text-gray-700 w-full">
-            </div>
-        </div>
-
-        <!-- Custom Alert/Message Box -->
-        <div id="messageBox" class="bg-red-500 text-white text-center py-3 px-4 rounded-lg mb-4 hidden"></div>
-
-        <!-- Form for adding a new customer -->
-        <form id="customerForm" class="mb-8">
-            <input type="hidden" id="customerId">
-            <div class="input-group">
-                <label for="name">ชื่อลูกค้า</label>
-                <input type="text" id="name" placeholder="กรุณากรอกชื่อลูกค้า" required>
-            </div>
-            <div class="input-group">
-                <label for="address">ที่อยู่</label>
-                <input type="text" id="address" placeholder="กรุณากรอกที่อยู่">
-            </div>
-            <div class="input-group">
-                <label for="phone">เบอร์โทรศัพท์</label>
-                <input type="tel" id="phone" placeholder="กรุณากรอกเบอร์โทรศัพท์">
-            </div>
-            <div class="input-group">
-                <label for="googleMapsLink">ลิงก์ Google Maps</label>
-                <input type="url" id="googleMapsLink" placeholder="วางลิงก์ Google Maps ที่นี่">
-            </div>
-            <!-- New input fields for installed equipment -->
-            <div class="input-group">
-                <label for="inverterModel">รุ่นอินเวอร์เตอร์</label>
-                <input type="text" id="inverterModel" placeholder="กรอกรุ่นอินเวอร์เตอร์">
-            </div>
-            <div class="input-group">
-                <label for="inverterSN">เลข SN อินเวอร์เตอร์</label>
-                <input type="text" id="inverterSN" placeholder="กรอกเลข SN อินเวอร์เตอร์">
-            </div>
-            <div class="input-group">
-                <label for="panelModel">รุ่นแผง</label>
-                <input type="text" id="panelModel" placeholder="กรอกรุ่นแผง">
-            </div>
-            <div class="input-group">
-                <label for="panelCount">จำนวนแผงที่ติดตั้ง</label>
-                <input type="number" id="panelCount" min="0" placeholder="กรอกจำนวนแผง">
-            </div>
-            <div class="input-group">
-                <label for="startDate">วันที่ติดตั้งระบบ</label>
-                <div class="flex items-center gap-2">
-                    <input type="date" id="startDate" class="flex-grow">
-                    <button type="button" id="setTodayBtn" class="bg-gray-200 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-300 transition-colors">ตั้งค่าวันนี้</button>
-                </div>
-            </div>
-            <div class="input-group">
-                <label for="serviceYears">ระยะเวลาการเซอร์วิส (ปี)</label>
-                <input type="number" id="serviceYears" value="1" min="1" max="10">
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label for="image1" class="mb-2 block">รูปภาพ 1</label>
-                    <div id="image1Preview" class="image-preview mb-2">
-                        <span>เลือกรูปภาพ</span>
-                        <input type="file" id="image1Input" class="hidden" accept="image/*">
-                    </div>
-                </div>
-                <div>
-                    <label for="image2" class="mb-2 block">รูปภาพ 2</label>
-                    <div id="image2Preview" class="image-preview mb-2">
-                        <span>เลือกรูปภาพ</span>
-                        <input type="file" id="image2Input" class="hidden" accept="image/*">
-                    </div>
-                </div>
-            </div>
-            <div class="input-group mt-4">
-                <label for="image3" class="mb-2 block">รูปภาพ 3 (แนวนอน)</label>
-                <div id="image3Preview" class="w-full h-48 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center p-2 text-sm text-gray-500 overflow-hidden cursor-pointer relative">
-                    <span>เลือกรูปภาพ</span>
-                    <input type="file" id="image3Input" class="hidden" accept="image/*">
-                </div>
-            </div>
-            <button type="submit" class="btn btn-primary w-full mt-4">เพิ่มลูกค้า</button>
-        </form>
-
-        <!-- Customer list section -->
-        <div id="customerList">
-            <h2 class="text-2xl font-semibold mb-4 text-gray-700">รายการลูกค้า</h2>
-            <!-- Customer cards will be inserted here by JavaScript -->
+    <!-- Customers List -->
+    <div class="bg-white rounded-lg p-4 shadow-sm">
+        <h2 class="text-xl font-semibold text-gray-800 mb-4">รายชื่อลูกค้า</h2>
+        <div id="customers-list" class="space-y-4">
+            <!-- Customer data will be rendered here -->
+            <div id="loading" class="text-center text-gray-500">กำลังโหลดข้อมูลลูกค้า...</div>
         </div>
     </div>
 
-    <!-- Custom Confirmation Modal -->
-    <div id="confirmModal" class="modal-overlay">
-        <div class="modal-content">
-            <p id="confirmMessage" class="text-lg font-medium text-gray-800 mb-6">คุณแน่ใจหรือไม่?</p>
-            <div class="flex justify-center space-x-4">
-                <button id="confirmYes" class="btn btn-danger">ใช่</button>
-                <button id="confirmNo" class="btn btn-primary">ไม่</button>
+    <!-- Custom Modal -->
+    <div id="custom-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg shadow-xl p-6 max-w-sm w-full">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">ยืนยันการลบข้อมูล</h3>
+            <p id="modal-text" class="text-sm text-gray-600 mb-6">คุณต้องการลบข้อมูลลูกค้าคนนี้ใช่หรือไม่?</p>
+            <div class="flex justify-end space-x-2">
+                <button id="modal-cancel" class="px-4 py-2 bg-gray-200 text-gray-800 text-sm rounded-md hover:bg-gray-300 focus:outline-none">ยกเลิก</button>
+                <button id="modal-confirm" class="px-4 py-2 bg-red-600 text-white text-sm rounded-md hover:bg-red-700 focus:outline-none">ยืนยัน</button>
             </div>
         </div>
     </div>
+</div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, doc, setDoc, deleteDoc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Firebase configuration and initialization
-        const firebaseConfig = {
-            apiKey: "AIzaSyDy713QUhB-ZTiAKWGWUZJq_sbaMGSY8",
-            authDomain: "udsolarmaxservice.firebaseapp.com",
-            projectId: "udsolarmaxservice",
-            storageBucket: "udsolarmaxservice.appspot.com",
-            messagingSenderId: "781138550265",
-            appId: "1:781138550265:web:2467a654ff30e0c9a25128",
-            measurementId: "G-TJT25GT8NW"
+    setLogLevel('debug'); // Enable debug logging for Firebase
+
+    // Global variables for Firebase configuration
+    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+    const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+    let app, db, auth;
+    let userId;
+
+    const form = document.getElementById('customer-form');
+    const customersList = document.getElementById('customers-list');
+    const alertContainer = document.getElementById('alert-container');
+    const modal = document.getElementById('custom-modal');
+    const modalConfirm = document.getElementById('modal-confirm');
+    const modalCancel = document.getElementById('modal-cancel');
+    const userIdDisplay = document.getElementById('user-id-display');
+    const copyIcon = document.getElementById('copy-icon');
+
+    const collectionPath = `artifacts/${appId}/public/data/customers`;
+
+    // Function to show a custom alert message
+    function showAlert(message, type = 'success') {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `p-3 rounded-lg text-sm mb-2`;
+        if (type === 'success') {
+            alertDiv.classList.add('bg-green-100', 'text-green-700');
+        } else if (type === 'error') {
+            alertDiv.classList.add('bg-red-100', 'text-red-700');
+        }
+        alertDiv.textContent = message;
+        alertContainer.appendChild(alertDiv);
+        setTimeout(() => alertDiv.remove(), 5000);
+    }
+
+    // Function to show the custom confirmation modal
+    function showModal(docId) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        modalConfirm.onclick = () => {
+            deleteCustomer(docId);
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
         };
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        modalCancel.onclick = () => {
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        };
+    }
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
+    // Function to render customers to the UI
+    function renderCustomers(customers) {
+        customersList.innerHTML = '';
+        if (customers.length === 0) {
+            customersList.innerHTML = '<p class="text-center text-gray-500">ยังไม่มีข้อมูลลูกค้า</p>';
+        } else {
+            customers.forEach(customer => {
+                const customerCard = document.createElement('div');
+                customerCard.className = 'bg-white rounded-lg p-4 border border-gray-200 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center';
+                customerCard.innerHTML = `
+                    <div class="mb-2 sm:mb-0">
+                        <p class="text-sm font-medium text-gray-900">${customer.firstName} ${customer.lastName}</p>
+                        <p class="text-xs text-gray-500">เบอร์: ${customer.phone}</p>
+                        <p class="text-xs text-gray-500">ที่อยู่: ${customer.address}</p>
+                        <p class="text-xs text-gray-500">UserID: ${customer.userId}</p>
+                    </div>
+                    <button class="bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1 rounded-full transition duration-150 ease-in-out" data-id="${customer.id}">
+                        <i class="fa-solid fa-trash-can mr-1"></i> ลบ
+                    </button>
+                `;
+                customersList.appendChild(customerCard);
+            });
+        }
+    }
+
+    // Function to handle form submission and save data to Firestore
+    async function addCustomer(event) {
+        event.preventDefault();
         
-        let userId = null;
-        
-        document.addEventListener('DOMContentLoaded', async () => {
-            // Wait for authentication state to be ready
-            onAuthStateChanged(auth, async (user) => {
-                if (user) {
-                    userId = user.uid;
-                    console.log("Authenticated with user ID:", userId);
+        const firstName = form.firstName.value.trim();
+        const lastName = form.lastName.value.trim();
+        const phone = form.phone.value.trim();
+        const address = form.address.value.trim();
 
-                    // All other logic is moved inside this block
-                    const customerForm = document.getElementById('customerForm');
-                    const customerList = document.getElementById('customerList');
-                    const customerIdInput = document.getElementById('customerId');
-                    const image1Input = document.getElementById('image1Input');
-                    const image2Input = document.getElementById('image2Input');
-                    const image3Input = document.getElementById('image3Input');
-                    const image1Preview = document.getElementById('image1Preview');
-                    const image2Preview = document.getElementById('image2Preview');
-                    const image3Preview = document.getElementById('image3Preview');
-                    const messageBox = document.getElementById('messageBox');
-                    const confirmModal = document.getElementById('confirmModal');
-                    const confirmMessage = document.getElementById('confirmMessage');
-                    const confirmYes = document.getElementById('confirmYes');
-                    const confirmNo = document.getElementById('confirmNo');
-                    const startDateInput = document.getElementById('startDate');
-                    const serviceYearsInput = document.getElementById('serviceYears');
-                    const setTodayBtn = document.getElementById('setTodayBtn');
-                    const currentDateDisplay = document.getElementById('currentDateDisplay');
-                    const testDateInput = document.getElementById('testDateInput');
-                    const submitBtn = customerForm.querySelector('button[type="submit"]');
-                    const logoUploadInput = document.getElementById('logoUpload');
-                    const appLogo = document.getElementById('appLogo');
-                    const showAllCustomersBtn = document.getElementById('showAllCustomersBtn');
-                    const showDueCustomersBtn = document.getElementById('showDueCustomersBtn');
-                    const formSection = document.getElementById('customerForm');
-                    const googleMapsLinkInput = document.getElementById('googleMapsLink');
-                    const inverterModelInput = document.getElementById('inverterModel');
-                    const inverterSNInput = document.getElementById('inverterSN');
-                    const panelModelInput = document.getElementById('panelModel');
-                    const panelCountInput = document.getElementById('panelCount');
+        if (!db) {
+            showAlert('Firestore is not initialized.', 'error');
+            return;
+        }
 
-                    let currentImages = { image1: '', image2: '', image3: '' };
-                    let customers = [];
-                    let confirmCallback = null;
+        try {
+            await addDoc(collection(db, collectionPath), {
+                firstName: firstName,
+                lastName: lastName,
+                phone: phone,
+                address: address,
+                userId: userId,
+                createdAt: new Date()
+            });
+            showAlert('บันทึกข้อมูลลูกค้าสำเร็จ!', 'success');
+            form.reset();
+        } catch (e) {
+            console.error("Error adding document: ", e);
+            showAlert('เกิดข้อผิดพลาดในการบันทึกข้อมูล: ' + e.message, 'error');
+        }
+    }
 
-                    // Load logo from Firestore on startup
-                    const logoDocRef = doc(db, `artifacts/${appId}/public/settings/logo`);
-                    const logoUnsubscribe = onSnapshot(logoDocRef, (docSnap) => {
-                        if (docSnap.exists() && docSnap.data().logo) {
-                            appLogo.src = docSnap.data().logo;
-                        } else {
-                            appLogo.src = 'https://placehold.co/250x100/A0A0A0/FFFFFF?text=UDsolarmax+Logo';
-                        }
-                    });
+    // Function to delete a customer
+    async function deleteCustomer(docId) {
+        if (!db) {
+            showAlert('Firestore is not initialized.', 'error');
+            return;
+        }
+        try {
+            await deleteDoc(doc(db, collectionPath, docId));
+            showAlert('ลบข้อมูลลูกค้าสำเร็จ!', 'success');
+        } catch (e) {
+            console.error("Error removing document: ", e);
+            showAlert('เกิดข้อผิดพลาดในการลบข้อมูล: ' + e.message, 'error');
+        }
+    }
 
-                    let currentDate = new Date();
-                    
-                    const displayCurrentDate = () => {
-                        const dateToDisplay = testDateInput.value ? new Date(testDateInput.value) : currentDate;
-                        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-                        const formattedDate = dateToDisplay.toLocaleDateString('th-TH', options);
-                        currentDateDisplay.textContent = `วันที่ปัจจุบัน: ${formattedDate}`;
-                    };
-                    
-                    const setToday = () => {
-                        const today = new Date();
-                        const year = today.getFullYear();
-                        const month = String(today.getMonth() + 1).padStart(2, '0');
-                        const day = String(today.getDate()).padStart(2, '0');
-                        startDateInput.value = `${year}-${month}-${day}`;
-                    };
+    // Initial Firebase setup and real-time listener
+    window.onload = async () => {
+        if (!firebaseConfig) {
+            showAlert('Firebase config is missing.', 'error');
+            return;
+        }
 
-                    const showMessage = (message) => {
-                        messageBox.textContent = message;
-                        messageBox.classList.remove('hidden');
-                        setTimeout(() => {
-                            messageBox.classList.add('hidden');
-                        }, 3000);
-                    };
+        app = initializeApp(firebaseConfig);
+        db = getFirestore(app);
+        auth = getAuth(app);
 
-                    const showConfirm = (message, callback) => {
-                        confirmMessage.textContent = message;
-                        confirmModal.classList.add('active');
-                        confirmCallback = callback;
-                    };
-
-                    confirmYes.addEventListener('click', () => {
-                        confirmModal.classList.remove('active');
-                        if (confirmCallback) {
-                            confirmCallback(true);
-                        }
-                    });
-
-                    confirmNo.addEventListener('click', () => {
-                        confirmModal.classList.remove('active');
-                        if (confirmCallback) {
-                            confirmCallback(false);
-                        }
-                    });
-                    
-                    const handleImageUpload = (input, previewElement, imageKey) => {
-                        const file = input.files[0];
-                        if (file) {
-                            const reader = new FileReader();
-                            reader.onload = (e) => {
-                                const img = document.createElement('img');
-                                img.src = e.target.result;
-                                img.className = "w-full h-full object-cover";
-                                previewElement.innerHTML = '';
-                                previewElement.appendChild(img);
-                                currentImages[imageKey] = e.target.result;
-                            };
-                            reader.readAsDataURL(file);
-                        }
-                    };
-
-                    image1Preview.addEventListener('click', () => image1Input.click());
-                    image2Preview.addEventListener('click', () => image2Input.click());
-                    image3Preview.addEventListener('click', () => image3Input.click());
-                    
-                    image1Input.addEventListener('change', () => handleImageUpload(image1Input, image1Preview, 'image1'));
-                    image2Input.addEventListener('change', () => handleImageUpload(image2Input, image2Preview, 'image2'));
-                    image3Input.addEventListener('change', () => handleImageUpload(image3Input, image3Preview, 'image3'));
-
-                    const resetImagePreviews = (customer = {}) => {
-                        const imagePreviews = [image1Preview, image2Preview, image3Preview];
-                        const imageKeys = ['image1', 'image2', 'image3'];
-
-                        imagePreviews.forEach((preview, index) => {
-                            const key = imageKeys[index];
-                            preview.innerHTML = customer[key] ? `<img src="${customer[key]}" class="w-full h-full object-cover" alt="รูปภาพลูกค้า ${index + 1}">` : `<span>เลือกรูปภาพ</span>`;
-                        });
-                        
-                        currentImages = {
-                            image1: customer.image1 || '',
-                            image2: customer.image2 || '',
-                            image3: customer.image3 || ''
-                        };
-                    };
-                    
-                    const findServiceStatus = (startDate, serviceYears, dateToCheck) => {
-                        if (!startDate) return { status: 'ไม่ระบุ', nextDate: 'ไม่ระบุ' };
-                        const start = new Date(startDate);
-                        const warrantyEnd = new Date(start);
-                        warrantyEnd.setFullYear(start.getFullYear() + serviceYears);
-                        
-                        if (dateToCheck.getTime() > warrantyEnd.getTime()) {
-                            return { status: 'expired', nextDate: 'ระบบหมดการรับประกันแล้ว' };
-                        }
-
-                        for (let i = 1; i <= serviceYears; i++) {
-                            const serviceDate = new Date(start);
-                            serviceDate.setFullYear(start.getFullYear() + i);
-                            
-                            const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000;
-                            if (serviceDate.getTime() >= dateToCheck.getTime() - thirtyDaysInMs) {
-                                return { status: 'due', nextDate: serviceDate.toISOString().split('T')[0] };
-                            }
-                        }
-                        return { status: 'ok', nextDate: 'ยังไม่ถึงกำหนด' };
-                    };
-
-                    const renderCustomers = (filterDue = false) => {
-                        const dateForCheck = testDateInput.value ? new Date(testDateInput.value) : currentDate;
-                        const filteredCustomers = filterDue 
-                            ? customers.filter(c => findServiceStatus(c.startDate, c.serviceYears, dateForCheck).status === 'due')
-                            : customers;
-
-                        customerList.innerHTML = `<h2 class="text-2xl font-semibold mb-4 text-gray-700">รายการลูกค้า</h2>`;
-                        if (filteredCustomers.length === 0) {
-                            customerList.innerHTML += '<p class="text-center text-gray-500">ยังไม่มีข้อมูลลูกค้า</p>';
-                            return;
-                        }
-                        
-                        filteredCustomers.forEach(customer => {
-                            const { status, nextDate } = findServiceStatus(customer.startDate, customer.serviceYears, dateForCheck);
-                            const dueStatus = status === 'due' ? 'service-due' : '';
-
-                            const customerCard = document.createElement('div');
-                            customerCard.className = `customer-card ${dueStatus}`;
-                            
-                            let nextServiceText = `<strong>นัดเซอร์วิสครั้งต่อไป:</strong> ${nextDate}`;
-                            let warrantyMessage = '';
-
-                            if (status === 'expired') {
-                                nextServiceText = `<span class="warranty-expired-text"><strong>ระบบหมดการรับประกันแล้ว</strong></span>`;
-                                warrantyMessage = `<p class="warranty-expired-text mt-2 text-center"><strong>ระบบหมดการรับประกันแล้ว</strong></p>`;
-                            } else if (status === 'due') {
-                                nextServiceText = `<p class="font-bold text-red-500"><strong>นัดเซอร์วิสครั้งต่อไป:</strong> ${nextDate}</p>`;
-                            }
-
-                            customerCard.innerHTML = `
-                                <h3 class="text-xl font-semibold">${customer.name}</h3>
-                                <div class="grid grid-cols-2 gap-4 mt-2">
-                                   <div>
-                                        <p><strong>ที่อยู่:</strong> ${customer.address || 'ไม่ระบุ'}</p>
-                                        <p><strong>เบอร์โทรศัพท์:</strong> ${customer.phone || 'ไม่ระบุ'}</p>
-                                        ${customer.googleMapsLink ? `<p><a href="${customer.googleMapsLink}" target="_blank" class="text-blue-500 hover:underline">ดูแผนที่</a></p>` : ''}
-                                        <p><strong>วันที่ติดตั้ง:</strong> ${customer.startDate || 'ไม่ระบุ'}</p>
-                                        <p><strong>รุ่นอินเวอร์เตอร์:</strong> ${customer.inverterModel || 'ไม่ระบุ'}</p>
-                                        <p><strong>เลข SN อินเวอร์เตอร์:</strong> ${customer.inverterSN || 'ไม่ระบุ'}</p>
-                                        <p><strong>รุ่นแผง:</strong> ${customer.panelModel || 'ไม่ระบุ'}</p>
-                                        <p><strong>จำนวนแผง:</strong> ${customer.panelCount || 'ไม่ระบุ'}</p>
-                                        ${customer.lastServiceDate ? `<p><strong>บริการครั้งล่าสุด:</strong> ${customer.lastServiceDate}</p>` : ''}
-                                        <p><strong>ระยะเวลาการเซอร์วิส:</strong> ${customer.serviceYears || 'ไม่ระบุ'} ปี</p>
-                                        ${nextServiceText}
-                                    </div>
-                                    <div class="h-48">
-                                        ${customer.image3 ? `<img src="${customer.image3}" class="rounded-lg w-full h-full object-cover" alt="รูปภาพลูกค้า 3">` : '<div class="w-full h-full bg-gray-200 rounded-lg flex items-center justify-center p-2 text-sm text-gray-500">ไม่มีรูปภาพ 3</div>'}
-                                    </div>
-                                </div>
-                                <div class="grid grid-cols-2 gap-2 mt-4">
-                                    <div class="h-32">
-                                        ${customer.image1 ? `<img src="${customer.image1}" class="rounded-lg w-full h-full object-cover" alt="รูปภาพลูกค้า 1">` : '<div class="w-full h-full bg-gray-200 rounded-lg flex items-center justify-center p-2 text-sm text-gray-500">ไม่มีรูปภาพ 1</div>'}
-                                    </div>
-                                    <div class="h-32">
-                                        ${customer.image2 ? `<img src="${customer.image2}" class="rounded-lg w-full h-full object-cover" alt="รูปภาพลูกค้า 2">` : '<div class="w-full h-full bg-gray-200 rounded-lg flex items-center justify-center p-2 text-sm text-gray-500">ไม่มีรูปภาพ 2</div>'}
-                                    </div>
-                                </div>
-                                
-                                ${warrantyMessage}
-                                <div class="mt-4 flex space-x-2">
-                                    <button class="btn btn-primary edit-btn" data-id="${customer.id}">แก้ไข</button>
-                                    <button class="btn btn-danger delete-btn" data-id="${customer.id}">ลบ</button>
-                                    ${status === 'due' ? `<button class="btn btn-success complete-service-btn" data-id="${customer.id}">บริการแล้ว</button>` : ''}
-                                </div>
-                            `;
-                            customerList.appendChild(customerCard);
-                        });
-                    };
-
-                    const listenForCustomers = () => {
-                        const customerCollection = collection(db, `artifacts/${appId}/public/data/Promtong`);
-                        onSnapshot(customerCollection, (snapshot) => {
-                            console.log("Received new customer data from Firestore.");
-                            customers = [];
-                            snapshot.forEach(doc => {
-                                customers.push({ id: doc.id, ...doc.data() });
-                            });
-                            renderCustomers();
-                        });
-                    };
-
-                    customerForm.addEventListener('submit', async (e) => {
-                        e.preventDefault();
-                        const id = customerIdInput.value;
-                        const name = document.getElementById('name').value;
-                        const address = document.getElementById('address').value;
-                        const phone = document.getElementById('phone').value;
-                        const googleMapsLink = googleMapsLinkInput.value;
-                        const inverterModel = inverterModelInput.value;
-                        const inverterSN = inverterSNInput.value;
-                        const panelModel = panelModelInput.value;
-                        const panelCount = panelCountInput.value;
-                        const startDate = startDateInput.value;
-                        const serviceYears = parseInt(serviceYearsInput.value, 10);
-
-                        if (!name) {
-                            showMessage('กรุณากรอกชื่อลูกค้า');
-                            return;
-                        }
-                        
-                        const customerData = {
-                            name,
-                            address,
-                            phone,
-                            googleMapsLink,
-                            inverterModel,
-                            inverterSN,
-                            panelModel,
-                            panelCount,
-                            startDate,
-                            serviceYears,
-                            image1: currentImages.image1,
-                            image2: currentImages.image2,
-                            image3: currentImages.image3,
-                        };
-
-                        try {
-                            if (id) {
-                                console.log("Attempting to update customer:", id);
-                                const customerDocRef = doc(db, `artifacts/${appId}/public/data/Promtong`, id);
-                                await updateDoc(customerDocRef, customerData);
-                                showMessage('อัปเดตข้อมูลลูกค้าเรียบร้อยแล้ว');
-                            } else {
-                                console.log("Attempting to add new customer...");
-                                const customerCollection = collection(db, `artifacts/${appId}/public/data/Promtong`);
-                                await addDoc(customerCollection, customerData);
-                                showMessage('เพิ่มลูกค้าใหม่เรียบร้อยแล้ว');
-                            }
-                            customerForm.reset();
-                            resetImagePreviews();
-                            customerIdInput.value = '';
-                            submitBtn.textContent = 'เพิ่มลูกค้า';
-                        } catch (error) {
-                            console.error("Error writing document: ", error);
-                            showMessage('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
-                        }
-                    });
-
-                    customerList.addEventListener('click', async (e) => {
-                        const target = e.target;
-                        if (target.classList.contains('edit-btn')) {
-                            const idToEdit = target.getAttribute('data-id');
-                            const customerToEdit = customers.find(customer => customer.id === idToEdit);
-                            if (customerToEdit) {
-                                customerIdInput.value = customerToEdit.id;
-                                document.getElementById('name').value = customerToEdit.name;
-                                document.getElementById('address').value = customerToEdit.address;
-                                document.getElementById('phone').value = customerToEdit.phone;
-                                googleMapsLinkInput.value = customerToEdit.googleMapsLink;
-                                inverterModelInput.value = customerToEdit.inverterModel;
-                                inverterSNInput.value = customerToEdit.inverterSN;
-                                panelModelInput.value = customerToEdit.panelModel;
-                                panelCountInput.value = customerToEdit.panelCount;
-                                startDateInput.value = customerToEdit.startDate;
-                                serviceYearsInput.value = customerToEdit.serviceYears;
-                                
-                                resetImagePreviews(customerToEdit);
-                                
-                                submitBtn.textContent = 'บันทึกการแก้ไข';
-                            }
-                        } else if (target.classList.contains('delete-btn')) {
-                            const idToDelete = target.getAttribute('data-id');
-                            showConfirm('คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลลูกค้ารายนี้?', async (result) => {
-                                if (result) {
-                                    try {
-                                        await deleteDoc(doc(db, `artifacts/${appId}/public/data/Promtong`, idToDelete));
-                                        showMessage('ลบข้อมูลลูกค้าเรียบร้อยแล้ว');
-                                    } catch (error) {
-                                        console.error("Error removing document: ", error);
-                                        showMessage('เกิดข้อผิดพลาดในการลบข้อมูล');
-                                    }
-                                }
-                            });
-                        } else if (target.classList.contains('complete-service-btn')) {
-                            const idToComplete = target.getAttribute('data-id');
-                            showConfirm('คุณแน่ใจหรือไม่ว่าต้องการบันทึกว่าการเซอร์วิสนี้เสร็จสิ้นแล้ว?', async (result) => {
-                                if (result) {
-                                    try {
-                                        const dateForCheck = testDateInput.value ? new Date(testDateInput.value) : currentDate;
-                                        const todayISO = dateForCheck.toISOString().split('T')[0];
-                                        const customerDocRef = doc(db, `artifacts/${appId}/public/data/Promtong`, idToComplete);
-                                        await updateDoc(customerDocRef, { lastServiceDate: todayISO });
-                                        showMessage('บันทึกการเซอร์วิสเรียบร้อยแล้ว');
-                                    } catch (error) {
-                                        console.error("Error updating document: ", error);
-                                        showMessage('เกิดข้อผิดพลาดในการบันทึกการเซอร์วิส');
-                                    }
-                                }
-                            });
-                        }
-                    });
-                    
-                    setTodayBtn.addEventListener('click', () => {
-                        setToday();
-                    });
-
-                    testDateInput.addEventListener('change', () => {
-                        displayCurrentDate();
-                        renderCustomers(document.getElementById('showDueCustomersBtn').classList.contains('active'));
-                    });
-
-                    logoUploadInput.addEventListener('change', async (e) => {
-                        const file = e.target.files[0];
-                        if (file) {
-                            const reader = new FileReader();
-                            reader.onload = async (e) => {
-                                const logoData = { logo: e.target.result };
-                                try {
-                                    await setDoc(doc(db, `artifacts/${appId}/public/settings/logo`), logoData);
-                                    showMessage('บันทึกโลโก้เรียบร้อยแล้ว');
-                                } catch (error) {
-                                    console.error("Error uploading logo: ", error);
-                                    showMessage('เกิดข้อผิดพลาดในการอัปโหลดโลโก้');
-                                }
-                            };
-                            reader.readAsDataURL(file);
-                        }
-                    });
-
-                    showAllCustomersBtn.addEventListener('click', () => {
-                        formSection.style.display = 'block';
-                        renderCustomers(false);
-                    });
-
-                    showDueCustomersBtn.addEventListener('click', () => {
-                        formSection.style.display = 'none';
-                        renderCustomers(true);
-                    });
-
-                    displayCurrentDate();
-                    listenForCustomers();
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                userId = user.uid;
+            } else {
+                userId = crypto.randomUUID();
+                if (initialAuthToken) {
+                    try {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                        userId = auth.currentUser.uid;
+                    } catch (error) {
+                        console.error("Error signing in with custom token: ", error);
+                        showAlert('Error signing in. Please try again.', 'error');
+                        return;
+                    }
                 } else {
-                    // Sign in anonymously if no user is authenticated
-                    await signInAnonymously(auth);
+                    try {
+                        await signInAnonymously(auth);
+                        userId = auth.currentUser.uid;
+                    } catch (error) {
+                        console.error("Error signing in anonymously: ", error);
+                        showAlert('Error signing in. Please try again.', 'error');
+                        return;
+                    }
                 }
+            }
+            document.getElementById('status-message').classList.remove('hidden');
+            userIdDisplay.textContent = userId;
+
+            // Set up real-time listener for customers
+            const q = collection(db, collectionPath);
+            onSnapshot(q, (querySnapshot) => {
+                const customers = [];
+                querySnapshot.forEach((doc) => {
+                    customers.push({ id: doc.id, ...doc.data() });
+                });
+                renderCustomers(customers);
+            }, (error) => {
+                console.error("Error getting real-time data: ", error);
+                showAlert('ไม่สามารถดึงข้อมูลได้: ' + error.message, 'error');
             });
         });
-    </script>
+
+        // Event listener for form submission
+        form.addEventListener('submit', addCustomer);
+
+        // Event listener for delete buttons using event delegation
+        customersList.addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
+                const button = e.target.closest('button');
+                const docId = button.getAttribute('data-id');
+                if (docId) {
+                    showModal(docId);
+                }
+            }
+        });
+
+        // Event listener to copy User ID to clipboard
+        copyIcon.addEventListener('click', () => {
+            if (userId) {
+                navigator.clipboard.writeText(userId).then(() => {
+                    copyIcon.classList.remove('fa-copy');
+                    copyIcon.classList.add('fa-clipboard-check');
+                    showAlert('คัดลอก User ID เรียบร้อย!', 'success');
+                    setTimeout(() => {
+                        copyIcon.classList.remove('fa-clipboard-check');
+                        copyIcon.classList.add('fa-copy');
+                    }, 2000);
+                }).catch(err => {
+                    console.error('Failed to copy: ', err);
+                    showAlert('ไม่สามารถคัดลอกได้', 'error');
+                });
+            }
+        });
+    };
+</script>
+
 </body>
 </html>
