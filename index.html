@@ -1,5 +1,3 @@
-Bash
-npm install firebase
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -232,22 +230,20 @@ npm install firebase
 
     // Firebase Configuration (Replace with your actual config)
     const firebaseConfig = {
-    apiKey: "AIzaSyDY7TgdhUhb_ZTAAKWeDUKZJq_abaMOsY8",
-    authDomain: "udsolarmaxservice.firebaseapp.com",
-    projectId: "udsolarmaxservice",
-    storageBucket: "udsolarmaxservice.firebasestorage.app",
-    messagingSenderId: "701138550265",
-    appId: "1:701138550265:web:2467a654ff30e0c9a25128",
-    measurementId: "G-TJ725GT0NW"
+      apiKey: "AIzaSyDY7TgdhUhb_ZTAAKWeDUKZJq_abaMOsY8",
+      authDomain: "udsolarmaxservice.firebaseapp.com",
+      projectId: "udsolarmaxservice",
+      storageBucket: "udsolarmaxservice.firebasestorage.app",
+      messagingSenderId: "701138550265",
+      appId: "1:701138550265:web:2467a654ff30e0c9a25128",
+      measurementId: "G-TJ725GT0NW"
     };
 
     // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const analytics = getAnalytics(app);
     const auth = getAuth(app);
-
-    // Export db for use in other files
-    export { db, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, serverTimestamp };
+    const db = getFirestore(app);
     
     // UI elements and variables
     const form = document.getElementById('customer-form');
@@ -307,7 +303,7 @@ npm install firebase
     async function loadAppConfig() {
         const docRef = doc(db, appConfigCollection, logoDocId);
         try {
-            const docSnap = await getDocs(docRef);
+            const docSnap = await getDoc(docRef);
             if (docSnap.exists()) {
                 const data = docSnap.data();
                 if (data.logo) {
