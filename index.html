@@ -573,6 +573,10 @@
                 alert("คุณไม่มีสิทธิ์บันทึกข้อมูล");
                 return;
             }
+            if (isEditing && userRole !== 'admin') {
+                alert("คุณไม่มีสิทธิ์แก้ไขข้อมูลลูกค้า");
+                return;
+            }
 
             const name = document.getElementById('name').value;
             const phone = document.getElementById('phone').value;
@@ -676,7 +680,7 @@
         }
 
         async function startEdit(docId, name, phone, address, installDate, warrantyYears, inverterModel, inverterSerial, panelModel, panelCount, latitude, longitude, image1, image2) {
-            if(userRole !== 'admin') {
+            if(userRole !== 'admin' && userRole !== 'editor') {
                 alert("คุณไม่มีสิทธิ์แก้ไขข้อมูลลูกค้า");
                 return;
             }
@@ -759,43 +763,10 @@
                     return;
                 }
 
-                const today = new Date();
-                const currentYear = today.getFullYear();
-                const currentDate = today.getDate();
-                const currentMonth = today.getMonth();
-
                 querySnapshot.forEach((doc) => {
                     const customer = doc.data();
                     const card = document.createElement('div');
                     card.classList.add('customer-card');
-
-                    let isServiceDue = false;
-                    let warningText = '';
-
-                    // Check for annual service
-                    if (customer.วันที่ติดตั้ง) {
-                        const installDate = new Date(customer.วันที่ติดตั้ง);
-                        const installMonth = installDate.getMonth();
-                        const installDay = installDate.getDate();
-
-                        const nextServiceDate = new Date(currentYear, installMonth, installDay);
-                        if (nextServiceDate < today) {
-                            nextServiceDate.setFullYear(currentYear + 1);
-                        }
-                        
-                        // Check if within one month of service date
-                        const oneMonthBefore = new Date(nextServiceDate);
-                        oneMonthBefore.setMonth(nextServiceDate.getMonth() - 1);
-
-                        if (today >= oneMonthBefore && today <= nextServiceDate) {
-                            isServiceDue = true;
-                            warningText = 'ถึงเวลาครบรอบเซอวิสประจำปีแล้ว';
-                        }
-                    }
-                    
-                    if (isServiceDue) {
-                        card.classList.add('blink');
-                    }
                     
                     let buttonsHtml = '';
                     if (role === 'admin') {
@@ -803,6 +774,8 @@
                             <button class="edit-button" onclick="startEdit('${doc.id}', '${customer.ชื่อ || ''}', '${customer.เบอร์โทร || ''}', '${customer.ที่อยู่ || ''}', '${customer.วันที่ติดตั้ง || ''}', '${customer.ปีการรับประกัน || ''}', '${customer.อินเวอร์เตอร์รุ่น || ''}', '${customer.หมายเลขซีเรียลอินเวอร์เตอร์ || ''}', '${customer.ยี่ห้อรุ่นแผง || ''}', '${customer.จำนวนแผง || ''}', '${customer.ละติจูด || ''}', '${customer.ลองจิจูด || ''}', '${customer.รูปภาพ1 || ''}', '${customer.รูปภาพ2 || ''}')">แก้ไข</button>
                             <button class="delete-button" onclick="deleteCustomerData('${doc.id}')">ลบ</button>
                         `;
+                    } else if (role === 'editor') {
+                         buttonsHtml = '';
                     } else {
                          buttonsHtml = '';
                     }
@@ -822,7 +795,6 @@
                             <p><strong>หมายเลขซีเรียลอินเวอร์เตอร์:</strong> ${customer.หมายเลขซีเรียลอินเวอร์เตอร์ || '-'}</p>
                             <p><strong>ยี่ห้อและรุ่นแผง:</strong> ${customer.ยี่ห้อรุ่นแผง || '-'}</p>
                             <p><strong>จำนวนแผงที่ใช้:</strong> ${customer.จำนวนแผง || '-'}</p>
-                            ${isServiceDue ? `<p class="warning-text">${warningText}</p>` : ''}
                         </div>
                         <div class="customer-card-images">
                             ${customer.รูปภาพ1 ? `<img src="${customer.รูปภาพ1}" class="customer-card-image" alt="รูปภาพลูกค้า 1">` : ''}
