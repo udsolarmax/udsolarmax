@@ -237,6 +237,12 @@
             font-weight: bold;
             margin-top: 10px;
         }
+        .service-button {
+            background-color: #4CAF50 !important;
+        }
+        .service-button:hover {
+            background-color: #45a049 !important;
+        }
     </style>
 </head>
 <body>
@@ -797,8 +803,6 @@
                             <button class="edit-button" onclick="startEdit('${doc.id}', '${customer.ชื่อ || ''}', '${customer.เบอร์โทร || ''}', '${customer.ที่อยู่ || ''}', '${customer.วันที่ติดตั้ง || ''}', '${customer.ปีการรับประกัน || ''}', '${customer.อินเวอร์เตอร์รุ่น || ''}', '${customer.หมายเลขซีเรียลอินเวอร์เตอร์ || ''}', '${customer.ยี่ห้อรุ่นแผง || ''}', '${customer.จำนวนแผง || ''}', '${customer.ละติจูด || ''}', '${customer.ลองจิจูด || ''}', '${customer.รูปภาพ1 || ''}', '${customer.รูปภาพ2 || ''}')">แก้ไข</button>
                             <button class="delete-button" onclick="deleteCustomerData('${doc.id}')">ลบ</button>
                         `;
-                    } else if (role === 'editor') {
-                         buttonsHtml = '';
                     } else {
                          buttonsHtml = '';
                     }
