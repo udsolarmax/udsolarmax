@@ -802,10 +802,12 @@
                         buttonsHtml = `
                             <button class="edit-button" onclick="startEdit('${doc.id}', '${customer.ชื่อ || ''}', '${customer.เบอร์โทร || ''}', '${customer.ที่อยู่ || ''}', '${customer.วันที่ติดตั้ง || ''}', '${customer.ปีการรับประกัน || ''}', '${customer.อินเวอร์เตอร์รุ่น || ''}', '${customer.หมายเลขซีเรียลอินเวอร์เตอร์ || ''}', '${customer.ยี่ห้อรุ่นแผง || ''}', '${customer.จำนวนแผง || ''}', '${customer.ละติจูด || ''}', '${customer.ลองจิจูด || ''}', '${customer.รูปภาพ1 || ''}', '${customer.รูปภาพ2 || ''}')">แก้ไข</button>
                             <button class="delete-button" onclick="deleteCustomerData('${doc.id}')">ลบ</button>
-                            ${isServiceDue ? `<button class="service-button" onclick="markAsServiced('${doc.id}')">เซอร์วิสแล้ว</button>` : ''}
+                            ${isServiceDue ? `<button class="service-button" onclick="markAsServiced('${doc.id}', '${customer.วันที่ติดตั้ง}')">เซอร์วิสแล้ว</button>` : ''}
                         `;
                     } else if (role === 'editor') {
-                         buttonsHtml = '';
+                         buttonsHtml = `
+                            ${isServiceDue ? `<button class="service-button" onclick="markAsServiced('${doc.id}', '${customer.วันที่ติดตั้ง}')">เซอร์วิสแล้ว</button>` : ''}
+                         `;
                     } else {
                          buttonsHtml = '';
                     }
@@ -827,10 +829,6 @@
                             <p><strong>จำนวนแผงที่ใช้:</strong> ${customer.จำนวนแผง || '-'}</p>
                             ${isServiceDue ? `<p class="warning-text">${warningText}</p>` : ''}
                         </div>
-                        <div class="customer-card-images">
-                            ${customer.รูปภาพ1 ? `<img src="${customer.รูปภาพ1}" class="customer-card-image" alt="รูปภาพลูกค้า 1">` : ''}
-                            ${customer.รูปภาพ2 ? `<img src="${customer.รูปภาพ2}" class="customer-card-image" alt="รูปภาพลูกค้า 2">` : ''}
-                        </div>
                         <div class="card-buttons">
                            ${buttonsHtml}
                         </div>
@@ -844,7 +842,7 @@
             });
         }
 
-        async function markAsServiced(docId) {
+        async function markAsServiced(docId, installDateString) {
             if (!auth.currentUser || (userRole !== 'admin' && userRole !== 'editor')) {
                 alert("คุณไม่มีสิทธิ์อัปเดตสถานะเซอร์วิส");
                 return;
@@ -853,11 +851,10 @@
                 try {
                     const docRef = db.collection("Promtong").doc(docId);
                     const doc = await docRef.get();
-                    const installDateString = doc.data().วันที่ติดตั้ง;
+                    const installDate = new Date(doc.data().วันที่ติดตั้ง);
 
-                    const oldDate = new Date(installDateString);
-                    const newDate = new Date(oldDate);
-                    newDate.setFullYear(oldDate.getFullYear() + 1);
+                    const newDate = new Date(installDate);
+                    newDate.setFullYear(installDate.getFullYear() + 1);
 
                     await docRef.update({
                         วันที่ติดตั้ง: newDate.toISOString().substring(0, 10),
