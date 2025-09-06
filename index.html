@@ -337,14 +337,12 @@
         let filteredCustomers = customers;
         if (filter === 'service') {
             filteredCustomers = customers.filter(customer => {
-                const installDate = new Date(customer.installDate);
+                const lastServiceDate = new Date(customer.lastServiceDate);
                 const serviceInterval = parseInt(customer.serviceInterval) || 0;
-                const nextServiceDate = new Date(installDate.getFullYear() + serviceInterval, installDate.getMonth(), installDate.getDate());
+                const nextServiceDate = new Date(lastServiceDate.getFullYear() + serviceInterval, lastServiceDate.getMonth(), lastServiceDate.getDate());
                 
-                const differenceInTime = nextServiceDate.getTime() - today.getTime();
-                const differenceInDays = differenceInTime / (1000 * 3600 * 24);
-                
-                return differenceInDays >= 0 && differenceInDays <= 365; // Show customers with service due in the next year
+                // Show customers who are due for service
+                return today >= nextServiceDate;
             });
         }
         
@@ -356,19 +354,23 @@
                 const serviceInterval = parseInt(customer.serviceInterval) || 0;
                 const nextServiceDate = new Date(lastServiceDate.getFullYear() + serviceInterval, lastServiceDate.getMonth(), lastServiceDate.getDate());
                 
-                const isServiceDue = today >= nextServiceDate && today <= new Date(nextServiceDate.getFullYear(), nextServiceDate.getMonth(), nextServiceDate.getDate() + 30);
+                const isServiceDue = today >= nextServiceDate;
                 const isWarrantyExpired = today > new Date(lastServiceDate.getFullYear() + serviceInterval, lastServiceDate.getMonth(), lastServiceDate.getDate() + 30);
                 
                 const customerCard = document.createElement('div');
                 let cardClass = 'customer-card mb-4';
                 let notificationText = '';
-
-                if (isWarrantyExpired) {
-                    cardClass += ' service-due';
-                    notificationText = 'ระบบหมดการรับประกันแล้ว';
-                } else if (isServiceDue) {
+                
+                const lastServiceYear = lastServiceDate.getFullYear();
+                const nextServiceYear = lastServiceYear + serviceInterval;
+                
+                // Check if the service is due but not yet marked as 'serviced'
+                if (isServiceDue && !isWarrantyExpired) {
                     cardClass += ' service-due';
                     notificationText = 'ถึงรอบเซอร์วิสแล้ว';
+                } else if (isWarrantyExpired) {
+                    cardClass += ' service-due';
+                    notificationText = 'ระบบหมดการรับประกันแล้ว';
                 }
 
                 customerCard.className = cardClass;
@@ -405,7 +407,7 @@
                         </div>
                     </div>
                     <div class="flex justify-end mt-4 space-x-2">
-                        ${isServiceDue ? `<button class="btn btn-success text-sm px-3 py-1" data-action="service" data-id="${customer.id}">บริการแล้ว</button>` : ''}
+                        ${isServiceDue && !isWarrantyExpired ? `<button class="btn btn-success text-sm px-3 py-1" data-action="service" data-id="${customer.id}">บริการแล้ว</button>` : ''}
                         <button class="btn btn-primary text-sm px-3 py-1" data-action="edit" data-id="${customer.id}">แก้ไข</button>
                         <button class="btn btn-danger text-sm px-3 py-1" data-action="delete" data-id="${customer.id}">ลบ</button>
                     </div>
