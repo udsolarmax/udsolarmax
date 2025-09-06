@@ -19,10 +19,35 @@
             border-radius: 10px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
-        #logo {
-            display: block;
-            margin: 0 auto 20px;
+        #logo-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        #logo-preview {
             max-width: 150px;
+            max-height: 150px;
+            margin: 0 auto 10px;
+            display: block;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 5px;
+        }
+        .logo-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        .logo-buttons button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .logo-buttons .delete-logo-button {
+            background-color: #f44336;
         }
         h1, h2 {
             text-align: center;
@@ -172,8 +197,16 @@
 <body>
 
     <div class="container">
-        <!-- เพิ่ม Logo ที่นี่ -->
-        <img id="logo" src="https://placehold.co/150x50/1a73e8/ffffff?text=Logo" alt="Company Logo">
+        <!-- เพิ่มส่วนสำหรับจัดการ Logo -->
+        <div id="logo-container">
+            <img id="logo-preview" src="#" alt="Company Logo" style="display:none;">
+            <input type="file" id="logo-upload" accept="image/*" style="display:none;">
+            <div class="logo-buttons">
+                <button onclick="document.getElementById('logo-upload').click()">อัปโหลด Logo</button>
+                <button class="delete-logo-button" onclick="deleteLogo()">ลบ Logo</button>
+            </div>
+        </div>
+        
         <h1 id="form-title">บันทึกข้อมูลลูกค้า</h1>
 
         <div class="form-section">
@@ -238,9 +271,65 @@
 
         let isEditing = false;
         let originalImages = { image1: null, image2: null };
+        let map, marker;
         
-        let map;
-        let marker;
+        // --- ส่วนของ Logo ---
+        document.getElementById('logo-upload').addEventListener('change', async function(event) {
+            const password = prompt("กรุณาใส่รหัสผ่านเพื่ออัปโหลด Logo:");
+            if (password !== "pairoj2112") {
+                alert("รหัสผ่านไม่ถูกต้อง");
+                this.value = '';
+                return;
+            }
+
+            const file = event.target.files[0];
+            if (file) {
+                const logoRef = storage.ref().child('company_logo/logo.png');
+                try {
+                    await logoRef.put(file);
+                    const logoUrl = await logoRef.getDownloadURL();
+                    db.collection('settings').doc('company').set({ logoUrl: logoUrl }, { merge: true });
+                    alert('อัปโหลด Logo สำเร็จ!');
+                } catch (error) {
+                    console.error('เกิดข้อผิดพลาดในการอัปโหลด Logo:', error);
+                    alert('เกิดข้อผิดพลาดในการอัปโหลด Logo');
+                }
+            }
+        });
+
+        async function deleteLogo() {
+            const password = prompt("กรุณาใส่รหัสผ่านเพื่อลบ Logo:");
+            if (password !== "pairoj2112") {
+                alert("รหัสผ่านไม่ถูกต้อง");
+                return;
+            }
+
+            if (confirm("คุณแน่ใจหรือไม่ว่าต้องการลบ Logo?")) {
+                try {
+                    const logoRef = storage.ref().child('company_logo/logo.png');
+                    await logoRef.delete();
+                    db.collection('settings').doc('company').set({ logoUrl: null }, { merge: true });
+                    alert('ลบ Logo สำเร็จ!');
+                } catch (error) {
+                    console.error('เกิดข้อผิดพลาดในการลบ Logo:', error);
+                    alert('เกิดข้อผิดพลาดในการลบ Logo');
+                }
+            }
+        }
+        
+        // ดึง Logo เมื่อโหลดหน้าเว็บ
+        db.collection('settings').doc('company').onSnapshot(doc => {
+            const logoPreview = document.getElementById('logo-preview');
+            const data = doc.data();
+            if (data && data.logoUrl) {
+                logoPreview.src = data.logoUrl;
+                logoPreview.style.display = 'block';
+            } else {
+                logoPreview.src = '#';
+                logoPreview.style.display = 'none';
+            }
+        });
+        // --- จบส่วนของ Logo ---
 
         function initMap() {
             const defaultLocation = { lat: 17.412198, lng: 102.781617 };
