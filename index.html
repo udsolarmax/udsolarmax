@@ -853,9 +853,8 @@
                     const doc = await docRef.get();
                     const installDate = new Date(doc.data().วันที่ติดตั้ง);
 
-                    const newDate = new Date(installDate);
-                    newDate.setFullYear(installDate.getFullYear() + 1);
-
+                    const newDate = new Date();
+                    
                     await docRef.update({
                         วันที่ติดตั้ง: newDate.toISOString().substring(0, 10),
                         timestamp: firebase.firestore.FieldValue.serverTimestamp()
