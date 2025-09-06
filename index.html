@@ -357,7 +357,7 @@
         // --- ส่วนของ Authentication ---
         auth.onAuthStateChanged(async user => {
             if (user) {
-                const rolesDoc = await db.collection('admin_role').doc(user.email).get();
+                const rolesDoc = await db.collection('admin_roles').doc(user.email).get();
                 if (rolesDoc.exists) {
                     userRole = rolesDoc.data().role;
                 } else {
@@ -400,21 +400,42 @@
             const formSection = document.getElementById('form-section');
             const logoButtons = document.getElementById('logo-buttons');
             const saveButton = document.getElementById('submit-button');
+            const mapInputs = document.querySelectorAll('#latitude, #longitude');
+            const mapButtons = document.querySelectorAll('.form-section button');
             
-            if (role === 'admin') {
+            if (role === 'admin' || role === 'editor') {
                 formSection.style.display = 'flex';
                 saveButton.style.display = 'block';
-                saveButton.textContent = 'บันทึกข้อมูล';
-                logoButtons.style.display = 'flex';
-            } else if (role === 'editor') {
-                formSection.style.display = 'flex';
-                saveButton.style.display = 'block';
-                saveButton.textContent = 'บันทึกข้อมูล';
-                logoButtons.style.display = 'none';
             } else {
                 formSection.style.display = 'none';
                 saveButton.style.display = 'none';
+            }
+
+            if (role === 'admin') {
+                logoButtons.style.display = 'flex';
+                mapInputs.forEach(input => input.disabled = false);
+                mapButtons.forEach(button => button.disabled = false);
+                document.getElementById('logo-upload').disabled = false;
+                document.querySelector('.delete-logo-button').disabled = false;
+            } else if (role === 'editor') {
+                 logoButtons.style.display = 'none';
+                 mapInputs.forEach(input => input.disabled = false);
+                 mapButtons.forEach(button => button.disabled = false);
+                 document.getElementById('logo-upload').disabled = true;
+                 document.querySelector('.delete-logo-button').disabled = true;
+            } else { // viewer
                 logoButtons.style.display = 'none';
+                mapInputs.forEach(input => input.disabled = true);
+                mapButtons.forEach(button => button.disabled = true);
+                document.getElementById('logo-upload').disabled = true;
+                document.querySelector('.delete-logo-button').disabled = true;
+            }
+
+            if (isEditing) {
+                if (role === 'editor') {
+                    // Editor can only add, not edit existing data
+                    formSection.style.display = 'none';
+                }
             }
         }
 
@@ -575,6 +596,10 @@
                 alert("คุณไม่มีสิทธิ์บันทึกข้อมูล");
                 return;
             }
+            if (isEditing && userRole !== 'admin') {
+                alert("คุณไม่มีสิทธิ์แก้ไขข้อมูลลูกค้า");
+                return;
+            }
 
             const name = document.getElementById('name').value;
             const phone = document.getElementById('phone').value;
@@ -678,7 +703,7 @@
         }
 
         async function startEdit(docId, name, phone, address, installDate, warrantyYears, inverterModel, inverterSerial, panelModel, panelCount, latitude, longitude, image1, image2) {
-            if(userRole !== 'admin' && userRole !== 'editor') {
+            if(userRole !== 'admin') {
                 alert("คุณไม่มีสิทธิ์แก้ไขข้อมูลลูกค้า");
                 return;
             }
