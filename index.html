@@ -357,7 +357,7 @@
         // --- ส่วนของ Authentication ---
         auth.onAuthStateChanged(async user => {
             if (user) {
-                const rolesDoc = await db.collection('admin_role').doc(user.email).get();
+                const rolesDoc = await db.collection('admin_roles').doc(user.email).get();
                 if (rolesDoc.exists) {
                     userRole = rolesDoc.data().role;
                 } else {
@@ -703,7 +703,7 @@
         }
 
         async function startEdit(docId, name, phone, address, installDate, warrantyYears, inverterModel, inverterSerial, panelModel, panelCount, latitude, longitude, image1, image2) {
-            if(userRole !== 'admin' && userRole !== 'editor') {
+            if(userRole !== 'admin') {
                 alert("คุณไม่มีสิทธิ์แก้ไขข้อมูลลูกค้า");
                 return;
             }
@@ -829,7 +829,7 @@
                         `;
                     } else if (role === 'editor') {
                          buttonsHtml = `
-                             ${isServiceDue ? `<button class="service-button" onclick="markAsServicedForEditor('${doc.id}')">เซอร์วิสแล้ว</button>` : ''}
+                            ${isServiceDue ? `<button class="service-button" onclick="markAsServiced('${doc.id}')">เซอร์วิสแล้ว</button>` : ''}
                          `;
                     } else {
                          buttonsHtml = '';
