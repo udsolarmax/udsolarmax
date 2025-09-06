@@ -77,6 +77,13 @@
         .form-section button:hover {
             background-color: #155bb5;
         }
+        .input-row {
+            display: flex;
+            gap: 15px;
+        }
+        .input-row input {
+            flex: 1;
+        }
         .image-upload-section {
             display: flex;
             justify-content: space-around;
@@ -177,7 +184,7 @@
             background-color: #d93025;
         }
         .card-buttons .map-button {
-            background-color: #1a73e8;
+            background-color: #4CAF50;
         }
         .edit-button:hover {
             background-color: #e68a00;
@@ -186,7 +193,7 @@
             background-color: #b3261e;
         }
         .map-button:hover {
-            background-color: #155bb5;
+            background-color: #45a049;
         }
         .error {
             color: #d93025;
@@ -214,6 +221,16 @@
             <input type="text" id="name" placeholder="ชื่อ-นามสกุล" required>
             <input type="tel" id="phone" placeholder="เบอร์โทรศัพท์" required>
             <input type="text" id="address" placeholder="ที่อยู่" required>
+            
+            <p><strong>ข้อมูลอุปกรณ์:</strong></p>
+            <div class="input-row">
+                <input type="text" id="inverter_model" placeholder="1. อินเวอร์เตอร์รุ่น" required>
+                <input type="text" id="inverter_serial" placeholder="2. หมายเลขซีเรียลอินเวอร์เตอร์" required>
+            </div>
+            <div class="input-row">
+                <input type="text" id="panel_model" placeholder="3. ยี่ห้อและรุ่นแผง" required>
+                <input type="text" id="panel_count" placeholder="4. จำนวนแผงที่ใช้" required>
+            </div>
             
             <p><strong>บันทึกพิกัดบนแผนที่:</strong> ปักหมุดหรือกรอกค่า</p>
             <div id="map"></div>
@@ -425,13 +442,17 @@
             const name = document.getElementById('name').value;
             const phone = document.getElementById('phone').value;
             const address = document.getElementById('address').value;
+            const inverterModel = document.getElementById('inverter_model').value;
+            const inverterSerial = document.getElementById('inverter_serial').value;
+            const panelModel = document.getElementById('panel_model').value;
+            const panelCount = document.getElementById('panel_count').value;
             const latitude = document.getElementById('latitude').value;
             const longitude = document.getElementById('longitude').value;
             const imageFile1 = document.getElementById('imageUpload1').files[0];
             const imageFile2 = document.getElementById('imageUpload2').files[0];
 
-            if (!name || !phone || !address || !latitude || !longitude) {
-                alert("กรุณากรอกข้อมูล ชื่อ เบอร์โทร ที่อยู่ และปักหมุดบนแผนที่ให้ครบถ้วน");
+            if (!name || !phone || !address || !inverterModel || !inverterSerial || !panelModel || !panelCount || !latitude || !longitude) {
+                alert("กรุณากรอกข้อมูลให้ครบถ้วนและปักหมุดบนแผนที่");
                 return;
             }
 
@@ -448,6 +469,10 @@
                 ชื่อ: name,
                 เบอร์โทร: phone,
                 ที่อยู่: address,
+                อินเวอร์เตอร์รุ่น: inverterModel,
+                หมายเลขซีเรียลอินเวอร์เตอร์: inverterSerial,
+                ยี่ห้อรุ่นแผง: panelModel,
+                จำนวนแผง: parseInt(panelCount),
                 ละติจูด: parseFloat(latitude),
                 ลองจิจูด: parseFloat(longitude),
                 รูปภาพ1: imageUrl1,
@@ -483,6 +508,10 @@
             document.getElementById('name').value = '';
             document.getElementById('phone').value = '';
             document.getElementById('address').value = '';
+            document.getElementById('inverter_model').value = '';
+            document.getElementById('inverter_serial').value = '';
+            document.getElementById('panel_model').value = '';
+            document.getElementById('panel_count').value = '';
             document.getElementById('docId').value = '';
             document.getElementById('latitude').value = '';
             document.getElementById('longitude').value = '';
@@ -501,7 +530,7 @@
             originalImages = { image1: null, image2: null };
         }
 
-        async function startEdit(docId, name, phone, address, latitude, longitude, image1, image2) {
+        async function startEdit(docId, name, phone, address, inverterModel, inverterSerial, panelModel, panelCount, latitude, longitude, image1, image2) {
             const password = prompt("กรุณาใส่รหัสผ่านเพื่อแก้ไข:");
             if (password !== "pairoj2112") {
                 alert("รหัสผ่านไม่ถูกต้อง");
@@ -513,6 +542,10 @@
             document.getElementById('name').value = name;
             document.getElementById('phone').value = phone;
             document.getElementById('address').value = address;
+            document.getElementById('inverter_model').value = inverterModel;
+            document.getElementById('inverter_serial').value = inverterSerial;
+            document.getElementById('panel_model').value = panelModel;
+            document.getElementById('panel_count').value = panelCount;
             document.getElementById('latitude').value = latitude;
             document.getElementById('longitude').value = longitude;
             document.getElementById('submit-button').textContent = 'บันทึกการแก้ไข';
@@ -591,6 +624,10 @@
                         <p><strong>ชื่อ-นามสกุล:</strong> ${customer.ชื่อ || '-'}</p>
                         <p><strong>เบอร์โทรศัพท์:</strong> ${customer.เบอร์โทร || '-'}</p>
                         <p><strong>ที่อยู่:</strong> ${customer.ที่อยู่ || '-'}</p>
+                        <p><strong>อินเวอร์เตอร์รุ่น:</strong> ${customer.อินเวอร์เตอร์รุ่น || '-'}</p>
+                        <p><strong>หมายเลขซีเรียลอินเวอร์เตอร์:</strong> ${customer.หมายเลขซีเรียลอินเวอร์เตอร์ || '-'}</p>
+                        <p><strong>ยี่ห้อและรุ่นแผง:</strong> ${customer.ยี่ห้อรุ่นแผง || '-'}</p>
+                        <p><strong>จำนวนแผงที่ใช้:</strong> ${customer.จำนวนแผง || '-'}</p>
                     </div>
                     <div class="customer-card-images">
                         ${customer.รูปภาพ1 ? `<img src="${customer.รูปภาพ1}" class="customer-card-image" alt="รูปภาพลูกค้า 1">` : ''}
@@ -598,7 +635,7 @@
                     </div>
                     <div class="card-buttons">
                         <button class="map-button" onclick="navigateTo('${customer.ละติจูด}', '${customer.ลองจิจูด}')">ดูแผนที่</button>
-                        <button class="edit-button" onclick="startEdit('${doc.id}', '${customer.ชื่อ || ''}', '${customer.เบอร์โทร || ''}', '${customer.ที่อยู่ || ''}', '${customer.ละติจูด || ''}', '${customer.ลองจิจูด || ''}', '${customer.รูปภาพ1 || ''}', '${customer.รูปภาพ2 || ''}')">แก้ไข</button>
+                        <button class="edit-button" onclick="startEdit('${doc.id}', '${customer.ชื่อ || ''}', '${customer.เบอร์โทร || ''}', '${customer.ที่อยู่ || ''}', '${customer.อินเวอร์เตอร์รุ่น || ''}', '${customer.หมายเลขซีเรียลอินเวอร์เตอร์ || ''}', '${customer.ยี่ห้อรุ่นแผง || ''}', '${customer.จำนวนแผง || ''}', '${customer.ละติจูด || ''}', '${customer.ลองจิจูด || ''}', '${customer.รูปภาพ1 || ''}', '${customer.รูปภาพ2 || ''}')">แก้ไข</button>
                         <button class="delete-button" onclick="deleteCustomerData('${doc.id}')">ลบ</button>
                     </div>
                 `;
