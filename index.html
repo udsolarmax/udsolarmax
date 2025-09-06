@@ -298,7 +298,7 @@
             <input type="text" id="latitude" placeholder="ละติจูด" required>
             <input type="text" id="longitude" placeholder="ลองจิจูด" required>
             
-            <button onclick="getCurrentLocation()">ใช้ตำแหน่งปัจจุบัน</button>
+            <button onclick="getCurrentLocation()">ใช้ตำแหน่งปัจจุบัน">ใช้ตำแหน่งปัจจุบัน</button>
             <button onclick="updateMapFromInput()">อัปเดตแผนที่จากพิกัด</button>
             
 
@@ -357,7 +357,7 @@
         // --- ส่วนของ Authentication ---
         auth.onAuthStateChanged(async user => {
             if (user) {
-                const rolesDoc = await db.collection('admin_roles').doc(user.email).get();
+                const rolesDoc = await db.collection('admin_role').doc(user.email).get();
                 if (rolesDoc.exists) {
                     userRole = rolesDoc.data().role;
                 } else {
@@ -400,17 +400,10 @@
             const formSection = document.getElementById('form-section');
             const logoButtons = document.getElementById('logo-buttons');
             const saveButton = document.getElementById('submit-button');
-            const mapInputs = document.getElementById('latitude').parentElement;
-            const mapButtons = document.querySelectorAll('.form-section button:not(#submit-button)');
 
             if (role === 'admin' || role === 'editor') {
                 formSection.style.display = 'flex';
                 saveButton.style.display = 'block';
-                if(isEditing && role === 'editor') {
-                    saveButton.textContent = 'บันทึกการแก้ไข (เพิ่มข้อมูลอย่างเดียว)';
-                } else {
-                    saveButton.textContent = 'บันทึกข้อมูล';
-                }
             } else {
                 formSection.style.display = 'none';
                 saveButton.style.display = 'none';
@@ -418,70 +411,8 @@
 
             if (role === 'admin') {
                 logoButtons.style.display = 'flex';
-                // Admin can edit all inputs
-                document.getElementById('name').disabled = false;
-                document.getElementById('phone').disabled = false;
-                document.getElementById('address').disabled = false;
-                document.getElementById('install_date').disabled = false;
-                document.getElementById('warranty_years').disabled = false;
-                document.getElementById('inverter_model').disabled = false;
-                document.getElementById('inverter_serial').disabled = false;
-                document.getElementById('panel_model').disabled = false;
-                document.getElementById('panel_count').disabled = false;
-                document.getElementById('latitude').disabled = false;
-                document.getElementById('longitude').disabled = false;
-
-                mapButtons.forEach(button => button.style.display = 'inline-block');
-                document.getElementById('logo-upload').disabled = false;
-                document.querySelector('.delete-logo-button').disabled = false;
-            } else if (role === 'editor') {
+            } else {
                 logoButtons.style.display = 'none';
-                // Editor can only add new data, so disable edit inputs
-                if(isEditing) {
-                    document.getElementById('name').disabled = true;
-                    document.getElementById('phone').disabled = true;
-                    document.getElementById('address').disabled = true;
-                    document.getElementById('install_date').disabled = true;
-                    document.getElementById('warranty_years').disabled = true;
-                    document.getElementById('inverter_model').disabled = true;
-                    document.getElementById('inverter_serial').disabled = true;
-                    document.getElementById('panel_model').disabled = true;
-                    document.getElementById('panel_count').disabled = true;
-                    document.getElementById('latitude').disabled = true;
-                    document.getElementById('longitude').disabled = true;
-                } else {
-                    document.getElementById('name').disabled = false;
-                    document.getElementById('phone').disabled = false;
-                    document.getElementById('address').disabled = false;
-                    document.getElementById('install_date').disabled = false;
-                    document.getElementById('warranty_years').disabled = false;
-                    document.getElementById('inverter_model').disabled = false;
-                    document.getElementById('inverter_serial').disabled = false;
-                    document.getElementById('panel_model').disabled = false;
-                    document.getElementById('panel_count').disabled = false;
-                    document.getElementById('latitude').disabled = false;
-                    document.getElementById('longitude').disabled = false;
-                }
-                mapButtons.forEach(button => button.style.display = 'inline-block');
-                document.getElementById('logo-upload').disabled = true;
-                document.querySelector('.delete-logo-button').disabled = true;
-            } else { // Viewer
-                logoButtons.style.display = 'none';
-                // Disable all inputs for viewers
-                document.getElementById('name').disabled = true;
-                document.getElementById('phone').disabled = true;
-                document.getElementById('address').disabled = true;
-                document.getElementById('install_date').disabled = true;
-                document.getElementById('warranty_years').disabled = true;
-                document.getElementById('inverter_model').disabled = true;
-                document.getElementById('inverter_serial').disabled = true;
-                document.getElementById('panel_model').disabled = true;
-                document.getElementById('panel_count').disabled = true;
-                document.getElementById('latitude').disabled = true;
-                document.getElementById('longitude').disabled = true;
-                mapButtons.forEach(button => button.style.display = 'none');
-                document.getElementById('logo-upload').disabled = true;
-                document.querySelector('.delete-logo-button').disabled = true;
             }
         }
 
@@ -749,7 +680,7 @@
         }
 
         async function startEdit(docId, name, phone, address, installDate, warrantyYears, inverterModel, inverterSerial, panelModel, panelCount, latitude, longitude, image1, image2) {
-            if(userRole !== 'admin') {
+            if(userRole !== 'admin' && userRole !== 'editor') {
                 alert("คุณไม่มีสิทธิ์แก้ไขข้อมูลลูกค้า");
                 return;
             }
@@ -843,6 +774,8 @@
                             <button class="edit-button" onclick="startEdit('${doc.id}', '${customer.ชื่อ || ''}', '${customer.เบอร์โทร || ''}', '${customer.ที่อยู่ || ''}', '${customer.วันที่ติดตั้ง || ''}', '${customer.ปีการรับประกัน || ''}', '${customer.อินเวอร์เตอร์รุ่น || ''}', '${customer.หมายเลขซีเรียลอินเวอร์เตอร์ || ''}', '${customer.ยี่ห้อรุ่นแผง || ''}', '${customer.จำนวนแผง || ''}', '${customer.ละติจูด || ''}', '${customer.ลองจิจูด || ''}', '${customer.รูปภาพ1 || ''}', '${customer.รูปภาพ2 || ''}')">แก้ไข</button>
                             <button class="delete-button" onclick="deleteCustomerData('${doc.id}')">ลบ</button>
                         `;
+                    } else if (role === 'editor') {
+                         buttonsHtml = '';
                     } else {
                          buttonsHtml = '';
                     }
