@@ -538,8 +538,8 @@
             const imageRef = storageRef.child(fileName);
 
             try {
-                const snapshot = await imageRef.put(file);
-                const downloadURL = await snapshot.ref.getDownloadURL();
+                await imageRef.put(file);
+                const downloadURL = await imageRef.getDownloadURL();
                 console.log("อัปโหลดรูปภาพสำเร็จ:", downloadURL);
                 return downloadURL;
             } catch (error) {
