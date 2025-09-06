@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ระบบจัดการข้อมูลลูกค้า</title>
     <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
     <!-- Google Fonts - Inter -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="[https://fonts.googleapis.com](https://fonts.googleapis.com)">
+    <link rel="preconnect" href="[https://fonts.gstatic.com](https://fonts.gstatic.com)" crossorigin>
+    <link href="[https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap](https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap)" rel="stylesheet">
     <!-- Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="[https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css](https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css)">
     
     <style>
         body {
@@ -351,22 +351,23 @@
         } else {
             filteredCustomers.forEach(customer => {
                 const lastServiceDate = new Date(customer.lastServiceDate);
+                const installDate = new Date(customer.installDate);
                 const serviceInterval = parseInt(customer.serviceInterval) || 0;
                 const nextServiceDate = new Date(lastServiceDate.getFullYear() + serviceInterval, lastServiceDate.getMonth(), lastServiceDate.getDate());
                 
                 const isServiceDue = today >= nextServiceDate;
-                const isWarrantyExpired = today > new Date(lastServiceDate.getFullYear() + serviceInterval, lastServiceDate.getMonth(), lastServiceDate.getDate());
+                const isWarrantyExpired = today > new Date(installDate.getFullYear() + serviceInterval, installDate.getMonth(), installDate.getDate());
                 
                 const customerCard = document.createElement('div');
                 let cardClass = 'customer-card mb-4';
                 let notificationText = '';
                 
-                if (isServiceDue && !isWarrantyExpired) {
-                    cardClass += ' service-due';
-                    notificationText = 'ถึงรอบเซอร์วิสแล้ว';
-                } else if (isWarrantyExpired) {
+                if (isWarrantyExpired) {
                     cardClass += ' service-due';
                     notificationText = 'ระบบหมดการรับประกันแล้ว';
+                } else if (isServiceDue) {
+                    cardClass += ' service-due';
+                    notificationText = 'ถึงรอบเซอร์วิสแล้ว';
                 }
 
                 customerCard.className = cardClass;
@@ -568,7 +569,6 @@
         const customerToUpdate = customers.find(c => c.id === id);
         if (customerToUpdate) {
             customerToUpdate.lastServiceDate = today;
-            customerToUpdate.installDate = today;
             localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(customers));
             showAlert('อัปเดตสถานะบริการแล้ว!', 'success');
             renderCustomers();
