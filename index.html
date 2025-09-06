@@ -352,20 +352,27 @@
             customersList.innerHTML = `<p class="text-center text-gray-500 py-4">ยังไม่มีข้อมูลลูกค้าที่ต้องแสดง</p>`;
         } else {
             filteredCustomers.forEach(customer => {
-                const installDate = new Date(customer.installDate);
+                const lastServiceDate = new Date(customer.lastServiceDate);
                 const serviceInterval = parseInt(customer.serviceInterval) || 0;
-                const nextServiceDate = new Date(installDate.getFullYear() + serviceInterval, installDate.getMonth(), installDate.getDate());
-                const isServiceDue = today >= nextServiceDate;
-                const isWarrantyExpired = today > new Date(installDate.getFullYear() + serviceInterval, installDate.getMonth(), installDate.getDate());
-
+                const nextServiceDate = new Date(lastServiceDate.getFullYear() + serviceInterval, lastServiceDate.getMonth(), lastServiceDate.getDate());
+                
+                const isServiceDue = today >= nextServiceDate && today <= new Date(nextServiceDate.getFullYear(), nextServiceDate.getMonth(), nextServiceDate.getDate() + 30);
+                const isWarrantyExpired = today > new Date(lastServiceDate.getFullYear() + serviceInterval, lastServiceDate.getMonth(), lastServiceDate.getDate() + 30);
+                
                 const customerCard = document.createElement('div');
-                customerCard.className = `customer-card mb-4 ${isServiceDue ? 'service-due' : ''}`;
-                
-                let warrantyStatusHTML = '';
+                let cardClass = 'customer-card mb-4';
+                let notificationText = '';
+
                 if (isWarrantyExpired) {
-                    warrantyStatusHTML = `<p class="mt-2 text-center warranty-expired-text font-bold text-lg">ระบบหมดการรับประกันแล้ว</p>`;
+                    cardClass += ' service-due';
+                    notificationText = 'ระบบหมดการรับประกันแล้ว';
+                } else if (isServiceDue) {
+                    cardClass += ' service-due';
+                    notificationText = 'ถึงรอบเซอร์วิสแล้ว';
                 }
-                
+
+                customerCard.className = cardClass;
+
                 const googleMapsLink = customer.googleMaps ? `<a href="${customer.googleMaps}" target="_blank" class="text-blue-500 hover:underline">ดูแผนที่</a>` : '';
 
                 customerCard.innerHTML = `
@@ -383,7 +390,7 @@
                             <p class="text-sm"><span class="font-semibold">เซอร์วิสล่าสุด:</span> ${customer.lastServiceDate}</p>
                             <p class="text-sm"><span class="font-semibold">ระยะเวลาเซอร์วิส:</span> ${customer.serviceInterval} ปี</p>
                             <p class="text-sm"><span class="font-semibold">นัดเซอร์วิสครั้งต่อไป:</span> ${nextServiceDate.toLocaleDateString('th-TH')}</p>
-                            ${warrantyStatusHTML}
+                            ${notificationText ? `<p class="mt-2 text-center warranty-expired-text font-bold text-lg">${notificationText}</p>` : ''}
                         </div>
                         <div class="space-y-4">
                             ${customer.image3 ? `<div class="w-full h-auto"><img src="${customer.image3}" alt="Image 3" class="w-full h-auto object-cover rounded-md shadow"></div>` : `<div class="w-full h-auto text-center py-6 text-gray-400">ไม่มีรูปภาพ 3</div>`}
