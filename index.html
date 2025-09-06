@@ -336,12 +336,11 @@
         // --- ส่วนของ Authentication ---
         auth.onAuthStateChanged(async user => {
             if (user) {
-                // ผู้ใช้ล็อกอินแล้ว, ดึงข้อมูลสิทธิ์จาก Firestore
-                const rolesDoc = await db.collection('admin_role').doc(user.email).get();
+                const rolesDoc = await db.collection('admin_roles').doc(user.email).get();
                 if (rolesDoc.exists) {
                     userRole = rolesDoc.data().role;
                 } else {
-                    userRole = 'viewer'; // หรือสิทธิ์เริ่มต้นอื่น ๆ
+                    userRole = 'viewer';
                 }
 
                 document.getElementById('login-form-container').style.display = 'none';
@@ -351,7 +350,6 @@
                 updateCustomerListWithAdminButtons(userRole);
                 initMap();
             } else {
-                // ผู้ใช้ออกจากระบบ
                 userRole = null;
                 document.getElementById('login-form-container').style.display = 'block';
                 document.getElementById('app-container').style.display = 'none';
@@ -657,7 +655,7 @@
         }
 
         async function startEdit(docId, name, phone, address, installDate, warrantyYears, inverterModel, inverterSerial, panelModel, panelCount, latitude, longitude, image1, image2) {
-            if(userRole !== 'admin' && userRole !== 'editor') {
+            if(userRole !== 'admin') {
                 alert("คุณไม่มีสิทธิ์แก้ไขข้อมูลลูกค้า");
                 return;
             }
