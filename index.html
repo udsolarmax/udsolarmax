@@ -147,7 +147,7 @@
             background-color: #d93025;
         }
         .card-buttons .map-button {
-            background-color: #4CAF50;
+            background-color: #1a73e8;
         }
         .edit-button:hover {
             background-color: #e68a00;
@@ -156,7 +156,7 @@
             background-color: #b3261e;
         }
         .map-button:hover {
-            background-color: #45a049;
+            background-color: #155bb5;
         }
         .error {
             color: #d93025;
@@ -175,10 +175,12 @@
             <input type="tel" id="phone" placeholder="เบอร์โทรศัพท์" required>
             <input type="text" id="address" placeholder="ที่อยู่" required>
             
-            <p><strong>บันทึกพิกัดบนแผนที่:</strong> คลิกบนแผนที่เพื่อปักหมุด</p>
+            <p><strong>บันทึกพิกัดบนแผนที่:</strong> ปักหมุดหรือกรอกค่า</p>
             <div id="map"></div>
-            <input type="hidden" id="latitude">
-            <input type="hidden" id="longitude">
+            <input type="text" id="latitude" placeholder="ละติจูด" required>
+            <input type="text" id="longitude" placeholder="ลองจิจูด" required>
+            <button onclick="updateMapFromInput()">อัปเดตแผนที่จากพิกัด</button>
+            
 
             <div class="image-upload-section">
                 <div class="image-upload-box">
@@ -257,6 +259,18 @@
                 document.getElementById('latitude').value = event.latLng.lat();
                 document.getElementById('longitude').value = event.latLng.lng();
             });
+        }
+
+        function updateMapFromInput() {
+            const lat = parseFloat(document.getElementById('latitude').value);
+            const lng = parseFloat(document.getElementById('longitude').value);
+            if (!isNaN(lat) && !isNaN(lng)) {
+                const newLocation = { lat: lat, lng: lng };
+                map.setCenter(newLocation);
+                marker.setPosition(newLocation);
+            } else {
+                alert("กรุณากรอกค่าพิกัดที่ถูกต้อง (ตัวเลขเท่านั้น)");
+            }
         }
         
         function previewImage(event, previewId) {
@@ -364,7 +378,6 @@
             document.getElementById('imagePreview2').src = '#';
             document.getElementById('imagePreview2').style.display = 'none';
 
-            // รีเซ็ตแผนที่กลับไปที่ตำแหน่งเริ่มต้น
             initMap();
 
             isEditing = false;
@@ -408,7 +421,6 @@
                 preview2.style.display = 'none';
             }
             
-            // ปรับแผนที่และหมุดไปที่พิกัดที่บันทึกไว้
             if (latitude && longitude) {
                 const position = { lat: parseFloat(latitude), lng: parseFloat(longitude) };
                 map.setCenter(position);
@@ -435,6 +447,15 @@
             }
         }
 
+        function navigateTo(lat, lng) {
+            if (!lat || !lng) {
+                alert("ไม่มีข้อมูลพิกัดสำหรับลูกค้ารายนี้");
+                return;
+            }
+            const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+            window.open(url, '_blank');
+        }
+
         db.collection("Promtong").orderBy("timestamp", "desc").onSnapshot((querySnapshot) => {
             const customerList = document.getElementById("customer-list");
             customerList.innerHTML = '';
@@ -459,7 +480,7 @@
                         ${customer.รูปภาพ2 ? `<img src="${customer.รูปภาพ2}" class="customer-card-image" alt="รูปภาพลูกค้า 2">` : ''}
                     </div>
                     <div class="card-buttons">
-                        <button class="map-button" onclick="showMap('${customer.ละติจูด}', '${customer.ลองจิจูด}', '${customer.ชื่อ}')">ดูแผนที่</button>
+                        <button class="map-button" onclick="navigateTo('${customer.ละติจูด}', '${customer.ลองจิจูด}')">ดูแผนที่</button>
                         <button class="edit-button" onclick="startEdit('${doc.id}', '${customer.ชื่อ || ''}', '${customer.เบอร์โทร || ''}', '${customer.ที่อยู่ || ''}', '${customer.ละติจูด || ''}', '${customer.ลองจิจูด || ''}', '${customer.รูปภาพ1 || ''}', '${customer.รูปภาพ2 || ''}')">แก้ไข</button>
                         <button class="delete-button" onclick="deleteCustomerData('${doc.id}')">ลบ</button>
                     </div>
@@ -471,15 +492,6 @@
             const customerList = document.getElementById("customer-list");
             customerList.innerHTML = '<p class="error">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>';
         });
-
-        function showMap(lat, lng, name) {
-            if (!lat || !lng) {
-                alert("ไม่มีข้อมูลพิกัดสำหรับลูกค้ารายนี้");
-                return;
-            }
-            const url = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
-            window.open(url, '_blank');
-        }
 
     </script>
 </body>
