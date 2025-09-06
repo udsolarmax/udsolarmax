@@ -382,9 +382,14 @@
             const logoButtons = document.getElementById('logo-buttons');
             const saveButton = document.getElementById('submit-button');
 
-            if (role === 'admin' || role === 'editor') {
+            // เพิ่มข้อมูลลูกค้าและแก้ไข/ลบ
+            if (role === 'admin') {
                 formSection.style.display = 'flex';
-                saveButton.style.display = 'block';
+                saveButton.textContent = 'บันทึกข้อมูล';
+            } else if (role === 'editor') {
+                 formSection.style.display = 'flex';
+                 saveButton.textContent = 'บันทึกข้อมูล';
+                 saveButton.onclick = saveCustomerData;
             } else {
                 formSection.style.display = 'none';
                 saveButton.style.display = 'none';
