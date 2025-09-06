@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-s`cale=1.0">
     <title>ระบบจัดการข้อมูลลูกค้า</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -115,68 +115,3 @@
                 <p>วันที่ปัจจุบัน: <span id="current-date"></span></p>
                 <p>วันที่จำลอง: <input type="date" id="mock-date" class="px-2 py-1 border rounded-md"></p>
             </div>
-            <div>
-                <label for="customer-name" class="block text-sm font-medium text-gray-700 mb-1">ชื่อลูกค้า</label>
-                <input type="text" id="customer-name" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="กรอกชื่อลูกค้า" required>
-            </div>
-            <div>
-                <label for="customer-address" class="block text-sm font-medium text-gray-700 mb-1">ที่อยู่</label>
-                <input type="text" id="customer-address" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="กรอกที่อยู่" required>
-            </div>
-            <div>
-                <label for="customer-phone" class="block text-sm font-medium text-gray-700 mb-1">เบอร์โทรศัพท์</label>
-                <input type="tel" id="customer-phone" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="กรอกเบอร์โทรศัพท์" required>
-            </div>
-            <div>
-                <label for="google-maps" class="block text-sm font-medium text-gray-700 mb-1">ลิงก์ Google Maps</label>
-                <input type="url" id="google-maps" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="วางลิงก์ Google Maps">
-            </div>
-            <div>
-                <label for="inverter-model" class="block text-sm font-medium text-gray-700 mb-1">รุ่นอินเวอร์เตอร์</label>
-                <input type="text" id="inverter-model" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="กรอกรุ่นอินเวอร์เตอร์">
-            </div>
-            <div>
-                <label for="inverter-sn" class="block text-sm font-medium text-gray-700 mb-1">เลข SN อินเวอร์เตอร์</label>
-                <input type="text" id="inverter-sn" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="กรอกเลข SN อินเวอร์เตอร์">
-            </div>
-            <div>
-                <label for="panel-model" class="block text-sm font-medium text-gray-700 mb-1">รุ่นแผง</label>
-                <input type="text" id="panel-model" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="กรอกรุ่นแผง">
-            </div>
-            <div>
-                <label for="panel-count" class="block text-sm font-medium text-gray-700 mb-1">จำนวนแผงที่ติดตั้ง</label>
-                <input type="number" id="panel-count" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="กรอกจำนวนแผง">
-            </div>
-            <div>
-                <label for="install-date" class="block text-sm font-medium text-gray-700 mb-1">วันที่ติดตั้งระบบ</label>
-                <div class="flex items-center space-x-2">
-                    <input type="date" id="install-date" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
-                    <button type="button" id="set-today-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-semibold py-2 px-3 rounded-md shadow-sm">วันนี้</button>
-                </div>
-            </div>
-            <div>
-                <label for="service-interval" class="block text-sm font-medium text-gray-700 mb-1">ระยะเวลาการเซอร์วิส (ปี)</label>
-                <input type="number" id="service-interval" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" value="1" min="1" required>
-            </div>
-        </div>
-        
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
-            <div class="flex flex-col items-center">
-                <label class="text-sm font-medium text-gray-700 mb-2">รูปภาพ 1</label>
-                <div id="image-preview-1" class="image-preview w-full">
-                    <img id="image-display-1" src="" alt="Image 1" class="hidden">
-                    <span id="image-placeholder-1">เพิ่มรูปภาพ</span>
-                </div>
-                <input type="file" id="image-upload-1" class="hidden" accept="image/*">
-            </div>
-            <div class="flex flex-col items-center">
-                <label class="text-sm font-medium text-gray-700 mb-2">รูปภาพ 2</label>
-                <div id="image-preview-2" class="image-preview w-full">
-                    <img id="image-display-2" src="" alt="Image 2" class="hidden">
-                    <span id="image-placeholder-2">เพิ่มรูปภาพ</span>
-                </div>
-                <input type="file" id="image-upload-2" class="hidden" accept="image/*">
-            </div>
-        </div>
-        <div class="flex flex-col items-center mt-6">
-            <label class
