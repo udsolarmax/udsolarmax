@@ -430,6 +430,7 @@
                 document.getElementById('logo-upload').disabled = true;
                 document.querySelector('.delete-logo-button').disabled = true;
             }
+
             if (isEditing) {
                 if (role === 'editor') {
                     // Editor can only add, not edit existing data
@@ -557,7 +558,7 @@
             }
         }
 
-        function previewImage(event, previewId) {
+        async function previewImage(event, previewId) {
             const reader = new FileReader();
             reader.onload = function(){
                 const output = document.getElementById(previewId);
@@ -827,15 +828,15 @@
                             ${isServiceDue ? `<button class="service-button" onclick="markAsServiced('${doc.id}', '${customer.วันที่ติดตั้ง}')">เซอร์วิสแล้ว</button>` : ''}
                         `;
                     } else if (role === 'editor') {
-                         buttonsHtml = `
-                             ${isServiceDue ? `<button class="service-button" onclick="markAsServiced('${doc.id}', '${customer.วันที่ติดตั้ง}')">เซอร์วิสแล้ว</button>` : ''}
-                         `;
+                        buttonsHtml = `
+                            <button class="edit-button" onclick="startEdit('${doc.id}', '${customer.ชื่อ || ''}', '${customer.เบอร์โทร || ''}', '${customer.ที่อยู่ || ''}', '${customer.วันที่ติดตั้ง || ''}', '${customer.ปีการรับประกัน || ''}', '${customer.อินเวอร์เตอร์รุ่น || ''}', '${customer.หมายเลขซีเรียลอินเวอร์เตอร์ || ''}', '${customer.ยี่ห้อรุ่นแผง || ''}', '${customer.จำนวนแผง || ''}', '${customer.ละติจูด || ''}', '${customer.ลองจิจูด || ''}', '${customer.รูปภาพ1 || ''}', '${customer.รูปภาพ2 || ''}')">แก้ไข</button>
+                            ${isServiceDue ? `<button class="service-button" onclick="markAsServiced('${doc.id}', '${customer.วันที่ติดตั้ง}')">เซอร์วิสแล้ว</button>` : ''}
+                        `;
                     } else {
-                         buttonsHtml = '';
-                    }
-
-                    if (customer.ละติจูด && customer.ลองจิจูด) {
-                        buttonsHtml += `<button class="map-button" onclick="navigateTo('${customer.ละติจูด}', '${customer.ลองจิจูด}')">ดูแผนที่</button>`;
+                        // For viewer, only the map button is shown
+                        if (customer.ละติจูด && customer.ลองจิจูด) {
+                             buttonsHtml += `<button class="map-button" onclick="navigateTo('${customer.ละติจูด}', '${customer.ลองจิจูด}')">ดูแผนที่</button>`;
+                         }
                     }
 
                     card.innerHTML = `
@@ -850,6 +851,10 @@
                             <p><strong>ยี่ห้อและรุ่นแผง:</strong> ${customer.ยี่ห้อรุ่นแผง || '-'}</p>
                             <p><strong>จำนวนแผงที่ใช้:</strong> ${customer.จำนวนแผง || '-'}</p>
                             ${isServiceDue ? `<p class="warning-text">${warningText}</p>` : ''}
+                        </div>
+                        <div class="customer-card-images">
+                            ${customer.รูปภาพ1 ? `<img src="${customer.รูปภาพ1}" class="customer-card-image" alt="รูปภาพลูกค้า 1">` : ''}
+                            ${customer.รูปภาพ2 ? `<img src="${customer.รูปภาพ2}" class="customer-card-image" alt="รูปภาพลูกค้า 2">` : ''}
                         </div>
                         <div class="card-buttons">
                            ${buttonsHtml}
