@@ -19,6 +19,11 @@
             border-radius: 10px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
+        #logo {
+            display: block;
+            margin: 0 auto 20px;
+            max-width: 150px;
+        }
         h1, h2 {
             text-align: center;
             color: #1a73e8;
@@ -147,7 +152,7 @@
             background-color: #d93025;
         }
         .card-buttons .map-button {
-            background-color: #1a73e8;
+            background-color: #4CAF50;
         }
         .edit-button:hover {
             background-color: #e68a00;
@@ -156,7 +161,7 @@
             background-color: #b3261e;
         }
         .map-button:hover {
-            background-color: #155bb5;
+            background-color: #45a049;
         }
         .error {
             color: #d93025;
@@ -167,6 +172,7 @@
 <body>
 
     <div class="container">
+        <img id="logo" src="https://placehold.co/150x50/1a73e8/ffffff?text=Logo" alt="Company Logo">
         <h1 id="form-title">บันทึกข้อมูลลูกค้า</h1>
 
         <div class="form-section">
@@ -179,8 +185,11 @@
             <div id="map"></div>
             <input type="text" id="latitude" placeholder="ละติจูด" required>
             <input type="text" id="longitude" placeholder="ลองจิจูด" required>
+            
+            <button onclick="getCurrentLocation()">ใช้ตำแหน่งปัจจุบัน</button>
             <button onclick="updateMapFromInput()">อัปเดตแผนที่จากพิกัด</button>
             
+
             <div class="image-upload-section">
                 <div class="image-upload-box">
                     <label for="imageUpload1">อัปโหลดรูปภาพ 1</label>
@@ -233,7 +242,7 @@
         let marker;
 
         function initMap() {
-            const defaultLocation = { lat: 17.412198, lng: 102.781617 }; // พิกัดเริ่มต้น: จังหวัดอุดรธานี
+            const defaultLocation = { lat: 17.412198, lng: 102.781617 };
             map = new google.maps.Map(document.getElementById("map"), {
                 center: defaultLocation,
                 zoom: 12,
@@ -270,6 +279,29 @@
             }
         }
         
+        function getCurrentLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const pos = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        };
+                        document.getElementById('latitude').value = pos.lat;
+                        document.getElementById('longitude').value = pos.lng;
+                        map.setCenter(pos);
+                        marker.setPosition(pos);
+                        map.setZoom(16);
+                    },
+                    () => {
+                        alert("ไม่สามารถดึงตำแหน่งปัจจุบันได้. โปรดตรวจสอบการอนุญาตการเข้าถึงตำแหน่ง");
+                    }
+                );
+            } else {
+                alert("เบราว์เซอร์ของคุณไม่รองรับ Geolocation");
+            }
+        }
+
         function previewImage(event, previewId) {
             const reader = new FileReader();
             reader.onload = function(){
@@ -432,7 +464,7 @@
 
             if (confirm("คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลลูกค้าคนนี้?")) {
                 try {
-s                    await db.collection("Promtong").doc(docId).delete();
+                    await db.collection("Promtong").doc(docId).delete();
                     alert("ลบข้อมูลลูกค้าสำเร็จแล้ว!");
                     console.log("ลบข้อมูลสำเร็จ");
                 } catch (error) {
