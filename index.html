@@ -337,7 +337,7 @@
         auth.onAuthStateChanged(async user => {
             if (user) {
                 // ผู้ใช้ล็อกอินแล้ว, ดึงข้อมูลสิทธิ์จาก Firestore
-                const rolesDoc = await db.collection('admin_role').doc(user.email).get();
+                const rolesDoc = await db.collection('admin_roles').doc(user.email).get();
                 if (rolesDoc.exists) {
                     userRole = rolesDoc.data().role;
                 } else {
@@ -381,6 +381,8 @@
             const formSection = document.getElementById('form-section');
             const logoButtons = document.getElementById('logo-buttons');
             const saveButton = document.getElementById('submit-button');
+            const editButton = document.getElementById('edit-button');
+            const deleteButton = document.getElementById('delete-button');
 
             if (role === 'admin' || role === 'editor') {
                 formSection.style.display = 'flex';
@@ -601,10 +603,6 @@
             };
 
             if (isEditing) {
-                if(userRole !== 'admin') {
-                    alert("คุณไม่มีสิทธิ์แก้ไขข้อมูลลูกค้า");
-                    return;
-                }
                 const docId = document.getElementById('docId').value;
                 try {
                     await db.collection("Promtong").doc(docId).update(dataToSave);
@@ -657,10 +655,6 @@
         }
 
         async function startEdit(docId, name, phone, address, installDate, warrantyYears, inverterModel, inverterSerial, panelModel, panelCount, latitude, longitude, image1, image2) {
-            if(userRole !== 'admin' && userRole !== 'editor') {
-                alert("คุณไม่มีสิทธิ์แก้ไขข้อมูลลูกค้า");
-                return;
-            }
             isEditing = true;
             document.getElementById('docId').value = docId;
             document.getElementById('name').value = name;
@@ -751,6 +745,10 @@
                             <button class="edit-button" onclick="startEdit('${doc.id}', '${customer.ชื่อ || ''}', '${customer.เบอร์โทร || ''}', '${customer.ที่อยู่ || ''}', '${customer.วันที่ติดตั้ง || ''}', '${customer.ปีการรับประกัน || ''}', '${customer.อินเวอร์เตอร์รุ่น || ''}', '${customer.หมายเลขซีเรียลอินเวอร์เตอร์ || ''}', '${customer.ยี่ห้อรุ่นแผง || ''}', '${customer.จำนวนแผง || ''}', '${customer.ละติจูด || ''}', '${customer.ลองจิจูด || ''}', '${customer.รูปภาพ1 || ''}', '${customer.รูปภาพ2 || ''}')">แก้ไข</button>
                             <button class="delete-button" onclick="deleteCustomerData('${doc.id}')">ลบ</button>
                         `;
+                    } else if (role === 'editor') {
+                         buttonsHtml = `
+                            <button class="edit-button" onclick="startEdit('${doc.id}', '${customer.ชื่อ || ''}', '${customer.เบอร์โทร || ''}', '${customer.ที่อยู่ || ''}', '${customer.วันที่ติดตั้ง || ''}', '${customer.ปีการรับประกัน || ''}', '${customer.อินเวอร์เตอร์รุ่น || ''}', '${customer.หมายเลขซีเรียลอินเวอร์เตอร์ || ''}', '${customer.ยี่ห้อรุ่นแผง || ''}', '${customer.จำนวนแผง || ''}', '${customer.ละติจูด || ''}', '${customer.ลองจิจูด || ''}', '${customer.รูปภาพ1 || ''}', '${customer.รูปภาพ2 || ''}')">แก้ไข</button>
+                         `;
                     } else {
                          buttonsHtml = '';
                     }
