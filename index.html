@@ -120,19 +120,30 @@
         .customer-card strong {
             color: #555;
         }
-        .edit-button {
+        .card-buttons {
+            display: flex;
+            gap: 5px;
             position: absolute;
             top: 10px;
             right: 10px;
+        }
+        .card-buttons button {
             background-color: #ff9800;
             color: white;
             border: none;
             padding: 5px 10px;
             border-radius: 5px;
             cursor: pointer;
+            font-size: 14px;
+        }
+        .card-buttons .delete-button {
+            background-color: #d93025;
         }
         .edit-button:hover {
             background-color: #e68a00;
+        }
+        .delete-button:hover {
+            background-color: #b3261e;
         }
         .error {
             color: #d93025;
@@ -210,8 +221,6 @@
 
         async function uploadImage(file) {
             if (!file) return null;
-
-            alert("กำลังอัปโหลดรูปภาพ... กรุณารอสักครู่");
             
             const storageRef = storage.ref();
             const fileName = `customer_images/${Date.now()}_${file.name}`;
@@ -249,8 +258,6 @@
                 alert("การอัปโหลดรูปภาพไม่สมบูรณ์ โปรดลองอีกครั้ง");
                 return;
             }
-            
-            alert("กำลังบันทึกข้อมูลลูกค้า... กรุณารอสักครู่");
             
             const dataToSave = {
                 ชื่อ: name,
@@ -341,6 +348,25 @@
             }
         }
 
+        async function deleteCustomerData(docId) {
+            const password = prompt("กรุณาใส่รหัสผ่านเพื่อลบข้อมูล:");
+            if (password !== "pairoj2112") {
+                alert("รหัสผ่านไม่ถูกต้อง");
+                return;
+            }
+
+            if (confirm("คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลลูกค้าคนนี้?")) {
+                try {
+                    await db.collection("Promtong").doc(docId).delete();
+                    alert("ลบข้อมูลลูกค้าสำเร็จแล้ว!");
+                    console.log("ลบข้อมูลสำเร็จ");
+                } catch (error) {
+                    console.error("เกิดข้อผิดพลาดในการลบ: ", error);
+                    alert("เกิดข้อผิดพลาดในการลบข้อมูล: " + error.message);
+                }
+            }
+        }
+
         db.collection("Promtong").orderBy("timestamp", "desc").onSnapshot((querySnapshot) => {
             const customerList = document.getElementById("customer-list");
             customerList.innerHTML = '';
@@ -364,7 +390,10 @@
                         ${customer.รูปภาพ1 ? `<img src="${customer.รูปภาพ1}" class="customer-card-image" alt="รูปภาพลูกค้า 1">` : ''}
                         ${customer.รูปภาพ2 ? `<img src="${customer.รูปภาพ2}" class="customer-card-image" alt="รูปภาพลูกค้า 2">` : ''}
                     </div>
-                    <button class="edit-button" onclick="startEdit('${doc.id}', '${customer.ชื่อ || ''}', '${customer.เบอร์โทร || ''}', '${customer.ที่อยู่ || ''}', '${customer.รูปภาพ1 || ''}', '${customer.รูปภาพ2 || ''}')">แก้ไข</button>
+                    <div class="card-buttons">
+                        <button class="edit-button" onclick="startEdit('${doc.id}', '${customer.ชื่อ || ''}', '${customer.เบอร์โทร || ''}', '${customer.ที่อยู่ || ''}', '${customer.รูปภาพ1 || ''}', '${customer.รูปภาพ2 || ''}')">แก้ไข</button>
+                        <button class="delete-button" onclick="deleteCustomerData('${doc.id}')">ลบ</button>
+                    </div>
                 `;
                 customerList.appendChild(card);
             });
