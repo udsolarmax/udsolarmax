@@ -61,6 +61,8 @@
         }
         .form-section input[type="text"],
         .form-section input[type="tel"],
+        .form-section input[type="email"],
+        .form-section input[type="password"],
         .form-section button {
             padding: 12px;
             font-size: 16px;
@@ -184,7 +186,7 @@
             background-color: #d93025;
         }
         .card-buttons .map-button {
-            background-color: #4CAF50;
+            background-color: #1a73e8;
         }
         .edit-button:hover {
             background-color: #e68a00;
@@ -193,22 +195,54 @@
             background-color: #b3261e;
         }
         .map-button:hover {
-            background-color: #45a049;
+            background-color: #155bb5;
         }
         .error {
             color: #d93025;
             text-align: center;
         }
+        #login-form-container {
+            max-width: 400px;
+            margin: auto;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            background-color: #ffffff;
+            display: none;
+        }
+        #logout-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            display: none;
+        }
     </style>
 </head>
 <body>
 
-    <div class="container">
+    <div id="login-form-container">
+        <h1>เข้าสู่ระบบ</h1>
+        <div class="form-section">
+            <input type="email" id="login-email" placeholder="อีเมล">
+            <input type="password" id="login-password" placeholder="รหัสผ่าน">
+            <button onclick="login()">เข้าสู่ระบบ</button>
+        </div>
+    </div>
+
+    <button id="logout-button" onclick="logout()">ออกจากระบบ</button>
+
+    <div id="app-container" class="container" style="display:none;">
         <!-- เพิ่มส่วนสำหรับจัดการ Logo -->
         <div id="logo-container">
             <img id="logo-preview" src="#" alt="Company Logo" style="display:none;">
             <input type="file" id="logo-upload" accept="image/*" style="display:none;">
-            <div class="logo-buttons">
+            <div class="logo-buttons" id="logo-buttons" style="display:none;">
                 <button onclick="document.getElementById('logo-upload').click()">อัปโหลด Logo</button>
                 <button class="delete-logo-button" onclick="deleteLogo()">ลบ Logo</button>
             </div>
@@ -216,7 +250,7 @@
         
         <h1 id="form-title">บันทึกข้อมูลลูกค้า</h1>
 
-        <div class="form-section">
+        <div id="form-section" class="form-section" style="display:none;">
             <input type="hidden" id="docId">
             <input type="text" id="name" placeholder="ชื่อ-นามสกุล" required>
             <input type="tel" id="phone" placeholder="เบอร์โทรศัพท์" required>
@@ -274,6 +308,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-storage.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-auth.js"></script>
     <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD2xxqJ9nmVovD03n1Y2ljFdgSEMIRKJMw&callback=initMap"></script>
     
     <script>
@@ -291,20 +326,89 @@
         
         const db = firebase.firestore();
         const storage = firebase.storage();
+        const auth = firebase.auth();
 
         let isEditing = false;
         let originalImages = { image1: null, image2: null };
         let map, marker;
+        let userRole = null;
+        
+        // --- ส่วนของ Authentication ---
+        auth.onAuthStateChanged(async user => {
+            if (user) {
+                // ผู้ใช้ล็อกอินแล้ว, ดึงข้อมูลสิทธิ์จาก Firestore
+                const rolesDoc = await db.collection('admin_roles').doc(user.email).get();
+                if (rolesDoc.exists) {
+                    userRole = rolesDoc.data().role;
+                } else {
+                    userRole = 'viewer'; // หรือสิทธิ์เริ่มต้นอื่น ๆ
+                }
+
+                document.getElementById('login-form-container').style.display = 'none';
+                document.getElementById('app-container').style.display = 'block';
+                document.getElementById('logout-button').style.display = 'block';
+                updateFormAndButtonsVisibility(userRole);
+                updateCustomerListWithAdminButtons(userRole);
+                initMap();
+            } else {
+                // ผู้ใช้ออกจากระบบ
+                userRole = null;
+                document.getElementById('login-form-container').style.display = 'block';
+                document.getElementById('app-container').style.display = 'none';
+                document.getElementById('logout-button').style.display = 'none';
+                updateCustomerListWithAdminButtons('viewer');
+            }
+        });
+
+        async function login() {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            try {
+                await auth.signInWithEmailAndPassword(email, password);
+                alert("เข้าสู่ระบบสำเร็จ!");
+            } catch (error) {
+                alert("เข้าสู่ระบบไม่สำเร็จ: " + error.message);
+            }
+        }
+
+        async function logout() {
+            await auth.signOut();
+            alert("ออกจากระบบสำเร็จ!");
+            resetForm();
+        }
+        
+        function updateFormAndButtonsVisibility(role) {
+            const formSection = document.getElementById('form-section');
+            const logoButtons = document.getElementById('logo-buttons');
+            const saveButton = document.getElementById('submit-button');
+
+            if (role === 'admin' || role === 'editor') {
+                formSection.style.display = 'flex';
+                saveButton.style.display = 'block';
+            } else {
+                formSection.style.display = 'none';
+                saveButton.style.display = 'none';
+            }
+
+            if (role === 'admin') {
+                logoButtons.style.display = 'flex';
+            } else {
+                logoButtons.style.display = 'none';
+            }
+        }
+
+        function promptLogin() {
+            alert("กรุณาเข้าสู่ระบบเพื่อแก้ไขหรือลบข้อมูล");
+        }
+        // --- จบส่วนของ Authentication ---
         
         // --- ส่วนของ Logo ---
         document.getElementById('logo-upload').addEventListener('change', async function(event) {
-            const password = prompt("กรุณาใส่รหัสผ่านเพื่ออัปโหลด Logo:");
-            if (password !== "pairoj2112") {
-                alert("รหัสผ่านไม่ถูกต้อง");
+            if (!auth.currentUser || userRole !== 'admin') {
+                alert("คุณไม่มีสิทธิ์อัปโหลด Logo");
                 this.value = '';
                 return;
             }
-
             const file = event.target.files[0];
             if (file) {
                 const logoRef = storage.ref().child('company_logo/logo.png');
@@ -321,12 +425,10 @@
         });
 
         async function deleteLogo() {
-            const password = prompt("กรุณาใส่รหัสผ่านเพื่อลบ Logo:");
-            if (password !== "pairoj2112") {
-                alert("รหัสผ่านไม่ถูกต้อง");
+            if (!auth.currentUser || userRole !== 'admin') {
+                alert("คุณไม่มีสิทธิ์ลบ Logo");
                 return;
             }
-
             if (confirm("คุณแน่ใจหรือไม่ว่าต้องการลบ Logo?")) {
                 try {
                     const logoRef = storage.ref().child('company_logo/logo.png');
@@ -340,7 +442,6 @@
             }
         }
         
-        // ดึง Logo เมื่อโหลดหน้าเว็บ
         db.collection('settings').doc('company').onSnapshot(doc => {
             const logoPreview = document.getElementById('logo-preview');
             const data = doc.data();
@@ -426,6 +527,10 @@
         }
 
         async function uploadImage(file) {
+            if (!auth.currentUser) {
+                alert("คุณไม่มีสิทธิ์อัปโหลดรูปภาพ");
+                return null;
+            }
             if (!file) return null;
             
             const storageRef = storage.ref();
@@ -445,6 +550,11 @@
         }
 
         async function saveCustomerData() {
+            if (!auth.currentUser || (userRole !== 'admin' && userRole !== 'editor')) {
+                alert("คุณไม่มีสิทธิ์บันทึกข้อมูล");
+                return;
+            }
+
             const name = document.getElementById('name').value;
             const phone = document.getElementById('phone').value;
             const address = document.getElementById('address').value;
@@ -543,12 +653,6 @@
         }
 
         async function startEdit(docId, name, phone, address, installDate, warrantyYears, inverterModel, inverterSerial, panelModel, panelCount, latitude, longitude, image1, image2) {
-            const password = prompt("กรุณาใส่รหัสผ่านเพื่อแก้ไข:");
-            if (password !== "pairoj2112") {
-                alert("รหัสผ่านไม่ถูกต้อง");
-                return;
-            }
-            
             isEditing = true;
             document.getElementById('docId').value = docId;
             document.getElementById('name').value = name;
@@ -593,12 +697,10 @@
         }
 
         async function deleteCustomerData(docId) {
-            const password = prompt("กรุณาใส่รหัสผ่านเพื่อลบข้อมูล:");
-            if (password !== "pairoj2112") {
-                alert("รหัสผ่านไม่ถูกต้อง");
+            if (!auth.currentUser || userRole !== 'admin') {
+                alert("คุณไม่มีสิทธิ์ลบข้อมูลลูกค้า");
                 return;
             }
-
             if (confirm("คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลลูกค้าคนนี้?")) {
                 try {
                     await db.collection("Promtong").doc(docId).delete();
@@ -619,50 +721,68 @@
             const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
             window.open(url, '_blank');
         }
+        
+        function updateCustomerListWithAdminButtons(role) {
+            db.collection("Promtong").orderBy("timestamp", "desc").onSnapshot((querySnapshot) => {
+                const customerList = document.getElementById("customer-list");
+                customerList.innerHTML = '';
+                
+                if (querySnapshot.empty) {
+                    customerList.innerHTML = '<p style="text-align: center;">ยังไม่มีข้อมูลลูกค้า</p>';
+                    return;
+                }
 
-        db.collection("Promtong").orderBy("timestamp", "desc").onSnapshot((querySnapshot) => {
-            const customerList = document.getElementById("customer-list");
-            customerList.innerHTML = '';
-            
-            if (querySnapshot.empty) {
-                customerList.innerHTML = '<p style="text-align: center;">ยังไม่มีข้อมูลลูกค้า</p>';
-                return;
-            }
+                querySnapshot.forEach((doc) => {
+                    const customer = doc.data();
+                    const card = document.createElement('div');
+                    card.classList.add('customer-card');
+                    
+                    let buttonsHtml = '';
+                    if (role === 'admin') {
+                        buttonsHtml = `
+                            <button class="edit-button" onclick="startEdit('${doc.id}', '${customer.ชื่อ || ''}', '${customer.เบอร์โทร || ''}', '${customer.ที่อยู่ || ''}', '${customer.วันที่ติดตั้ง || ''}', '${customer.ปีการรับประกัน || ''}', '${customer.อินเวอร์เตอร์รุ่น || ''}', '${customer.หมายเลขซีเรียลอินเวอร์เตอร์ || ''}', '${customer.ยี่ห้อรุ่นแผง || ''}', '${customer.จำนวนแผง || ''}', '${customer.ละติจูด || ''}', '${customer.ลองจิจูด || ''}', '${customer.รูปภาพ1 || ''}', '${customer.รูปภาพ2 || ''}')">แก้ไข</button>
+                            <button class="delete-button" onclick="deleteCustomerData('${doc.id}')">ลบ</button>
+                        `;
+                    } else if (role === 'editor') {
+                         buttonsHtml = `
+                            <button class="edit-button" onclick="startEdit('${doc.id}', '${customer.ชื่อ || ''}', '${customer.เบอร์โทร || ''}', '${customer.ที่อยู่ || ''}', '${customer.วันที่ติดตั้ง || ''}', '${customer.ปีการรับประกัน || ''}', '${customer.อินเวอร์เตอร์รุ่น || ''}', '${customer.หมายเลขซีเรียลอินเวอร์เตอร์ || ''}', '${customer.ยี่ห้อรุ่นแผง || ''}', '${customer.จำนวนแผง || ''}', '${customer.ละติจูด || ''}', '${customer.ลองจิจูด || ''}', '${customer.รูปภาพ1 || ''}', '${customer.รูปภาพ2 || ''}')">แก้ไข</button>
+                         `;
+                    } else {
+                         buttonsHtml = '';
+                    }
 
-            querySnapshot.forEach((doc) => {
-                const customer = doc.data();
-                const card = document.createElement('div');
-                card.classList.add('customer-card');
-                card.innerHTML = `
-                    <div class="customer-card-info">
-                        <p><strong>ชื่อ-นามสกุล:</strong> ${customer.ชื่อ || '-'}</p>
-                        <p><strong>เบอร์โทรศัพท์:</strong> ${customer.เบอร์โทร || '-'}</p>
-                        <p><strong>ที่อยู่:</strong> ${customer.ที่อยู่ || '-'}</p>
-                        <p><strong>วันที่ติดตั้ง:</strong> ${customer.วันที่ติดตั้ง || '-'}</p>
-                        <p><strong>ปีการรับประกัน:</strong> ${customer.ปีการรับประกัน || '-'}</p>
-                        <p><strong>อินเวอร์เตอร์รุ่น:</strong> ${customer.อินเวอร์เตอร์รุ่น || '-'}</p>
-                        <p><strong>หมายเลขซีเรียลอินเวอร์เตอร์:</strong> ${customer.หมายเลขซีเรียลอินเวอร์เตอร์ || '-'}</p>
-                        <p><strong>ยี่ห้อและรุ่นแผง:</strong> ${customer.ยี่ห้อรุ่นแผง || '-'}</p>
-                        <p><strong>จำนวนแผงที่ใช้:</strong> ${customer.จำนวนแผง || '-'}</p>
-                    </div>
-                    <div class="customer-card-images">
-                        ${customer.รูปภาพ1 ? `<img src="${customer.รูปภาพ1}" class="customer-card-image" alt="รูปภาพลูกค้า 1">` : ''}
-                        ${customer.รูปภาพ2 ? `<img src="${customer.รูปภาพ2}" class="customer-card-image" alt="รูปภาพลูกค้า 2">` : ''}
-                    </div>
-                    <div class="card-buttons">
-                        <button class="map-button" onclick="navigateTo('${customer.ละติจูด}', '${customer.ลองจิจูด}')">ดูแผนที่</button>
-                        <button class="edit-button" onclick="startEdit('${doc.id}', '${customer.ชื่อ || ''}', '${customer.เบอร์โทร || ''}', '${customer.ที่อยู่ || ''}', '${customer.วันที่ติดตั้ง || ''}', '${customer.ปีการรับประกัน || ''}', '${customer.อินเวอร์เตอร์รุ่น || ''}', '${customer.หมายเลขซีเรียลอินเวอร์เตอร์ || ''}', '${customer.ยี่ห้อรุ่นแผง || ''}', '${customer.จำนวนแผง || ''}', '${customer.ละติจูด || ''}', '${customer.ลองจิจูด || ''}', '${customer.รูปภาพ1 || ''}', '${customer.รูปภาพ2 || ''}')">แก้ไข</button>
-                        <button class="delete-button" onclick="deleteCustomerData('${doc.id}')">ลบ</button>
-                    </div>
-                `;
-                customerList.appendChild(card);
+                    if (customer.ละติจูด && customer.ลองจิจูด) {
+                        buttonsHtml += `<button class="map-button" onclick="navigateTo('${customer.ละติจูด}', '${customer.ลองจิจูด}')">ดูแผนที่</button>`;
+                    }
+
+                    card.innerHTML = `
+                        <div class="customer-card-info">
+                            <p><strong>ชื่อ-นามสกุล:</strong> ${customer.ชื่อ || '-'}</p>
+                            <p><strong>เบอร์โทรศัพท์:</strong> ${customer.เบอร์โทร || '-'}</p>
+                            <p><strong>ที่อยู่:</strong> ${customer.ที่อยู่ || '-'}</p>
+                            <p><strong>วันที่ติดตั้ง:</strong> ${customer.วันที่ติดตั้ง || '-'}</p>
+                            <p><strong>ปีการรับประกัน:</strong> ${customer.ปีการรับประกัน || '-'}</p>
+                            <p><strong>อินเวอร์เตอร์รุ่น:</strong> ${customer.อินเวอร์เตอร์รุ่น || '-'}</p>
+                            <p><strong>หมายเลขซีเรียลอินเวอร์เตอร์:</strong> ${customer.หมายเลขซีเรียลอินเวอร์เตอร์ || '-'}</p>
+                            <p><strong>ยี่ห้อและรุ่นแผง:</strong> ${customer.ยี่ห้อรุ่นแผง || '-'}</p>
+                            <p><strong>จำนวนแผงที่ใช้:</strong> ${customer.จำนวนแผง || '-'}</p>
+                        </div>
+                        <div class="customer-card-images">
+                            ${customer.รูปภาพ1 ? `<img src="${customer.รูปภาพ1}" class="customer-card-image" alt="รูปภาพลูกค้า 1">` : ''}
+                            ${customer.รูปภาพ2 ? `<img src="${customer.รูปภาพ2}" class="customer-card-image" alt="รูปภาพลูกค้า 2">` : ''}
+                        </div>
+                        <div class="card-buttons">
+                           ${buttonsHtml}
+                        </div>
+                    `;
+                    customerList.appendChild(card);
+                });
+            }, (error) => {
+                console.error("เกิดข้อผิดพลาดในการดึงข้อมูล: ", error);
+                const customerList = document.getElementById("customer-list");
+                customerList.innerHTML = '<p class="error">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>';
             });
-        }, (error) => {
-            console.error("เกิดข้อผิดพลาดในการดึงข้อมูล: ", error);
-            const customerList = document.getElementById("customer-list");
-            customerList.innerHTML = '<p class="error">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>';
-        });
-
+        }
     </script>
 </body>
 </html>
