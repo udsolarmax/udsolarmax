@@ -181,7 +181,6 @@
             <input type="text" id="longitude" placeholder="ลองจิจูด" required>
             <button onclick="updateMapFromInput()">อัปเดตแผนที่จากพิกัด</button>
             
-
             <div class="image-upload-section">
                 <div class="image-upload-box">
                     <label for="imageUpload1">อัปโหลดรูปภาพ 1</label>
@@ -246,21 +245,19 @@
                 draggable: true,
             });
 
-            // อัปเดตพิกัดเมื่อลากหมุด
             marker.addListener("dragend", () => {
                 const newPos = marker.getPosition();
                 document.getElementById('latitude').value = newPos.lat();
                 document.getElementById('longitude').value = newPos.lng();
             });
 
-            // อัปเดตพิกัดเมื่อคลิกบนแผนที่
             map.addListener("click", (event) => {
                 marker.setPosition(event.latLng);
                 document.getElementById('latitude').value = event.latLng.lat();
                 document.getElementById('longitude').value = event.latLng.lng();
             });
         }
-
+        
         function updateMapFromInput() {
             const lat = parseFloat(document.getElementById('latitude').value);
             const lng = parseFloat(document.getElementById('longitude').value);
@@ -378,8 +375,6 @@
             document.getElementById('imagePreview2').src = '#';
             document.getElementById('imagePreview2').style.display = 'none';
 
-            initMap();
-
             isEditing = false;
             originalImages = { image1: null, image2: null };
         }
@@ -437,7 +432,7 @@
 
             if (confirm("คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลลูกค้าคนนี้?")) {
                 try {
-                    await db.collection("Promtong").doc(docId).delete();
+s                    await db.collection("Promtong").doc(docId).delete();
                     alert("ลบข้อมูลลูกค้าสำเร็จแล้ว!");
                     console.log("ลบข้อมูลสำเร็จ");
                 } catch (error) {
