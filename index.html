@@ -400,9 +400,7 @@
             const formSection = document.getElementById('form-section');
             const logoButtons = document.getElementById('logo-buttons');
             const saveButton = document.getElementById('submit-button');
-            const mapInputs = document.querySelectorAll('#latitude, #longitude');
-            const mapButtons = document.querySelectorAll('.form-section button');
-            
+
             if (role === 'admin' || role === 'editor') {
                 formSection.style.display = 'flex';
                 saveButton.style.display = 'block';
@@ -413,29 +411,8 @@
 
             if (role === 'admin') {
                 logoButtons.style.display = 'flex';
-                mapInputs.forEach(input => input.disabled = false);
-                mapButtons.forEach(button => button.disabled = false);
-                document.getElementById('logo-upload').disabled = false;
-                document.querySelector('.delete-logo-button').disabled = false;
-            } else if (role === 'editor') {
-                 logoButtons.style.display = 'none';
-                 mapInputs.forEach(input => input.disabled = false);
-                 mapButtons.forEach(button => button.disabled = false);
-                 document.getElementById('logo-upload').disabled = true;
-                 document.querySelector('.delete-logo-button').disabled = true;
-            } else { // viewer
+            } else {
                 logoButtons.style.display = 'none';
-                mapInputs.forEach(input => input.disabled = true);
-                mapButtons.forEach(button => button.disabled = true);
-                document.getElementById('logo-upload').disabled = true;
-                document.querySelector('.delete-logo-button').disabled = true;
-            }
-
-            if (isEditing) {
-                if (role === 'editor') {
-                    // Editor can only add, not edit existing data
-                    formSection.style.display = 'none';
-                }
             }
         }
 
@@ -829,7 +806,7 @@
                         `;
                     } else if (role === 'editor') {
                          buttonsHtml = `
-                             ${isServiceDue ? `<button class="service-button" onclick="markAsServicedForEditor('${doc.id}')">เซอร์วิสแล้ว</button>` : ''}
+                            ${isServiceDue ? `<button class="service-button" onclick="markAsServiced('${doc.id}')">เซอร์วิสแล้ว</button>` : ''}
                          `;
                     } else {
                          buttonsHtml = '';
