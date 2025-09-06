@@ -337,7 +337,7 @@
         auth.onAuthStateChanged(async user => {
             if (user) {
                 // ผู้ใช้ล็อกอินแล้ว, ดึงข้อมูลสิทธิ์จาก Firestore
-                const rolesDoc = await db.collection('admin_roles').doc(user.email).get();
+                const rolesDoc = await db.collection('admin_role').doc(user.email).get();
                 if (rolesDoc.exists) {
                     userRole = rolesDoc.data().role;
                 } else {
