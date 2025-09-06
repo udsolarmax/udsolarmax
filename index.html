@@ -298,7 +298,7 @@
             <input type="text" id="latitude" placeholder="ละติจูด" required>
             <input type="text" id="longitude" placeholder="ลองจิจูด" required>
             
-            <button onclick="getCurrentLocation()">ใช้ตำแหน่งปัจจุบัน">ใช้ตำแหน่งปัจจุบัน</button>
+            <button onclick="getCurrentLocation()">ใช้ตำแหน่งปัจจุบัน</button>
             <button onclick="updateMapFromInput()">อัปเดตแผนที่จากพิกัด</button>
             
 
@@ -357,7 +357,7 @@
         // --- ส่วนของ Authentication ---
         auth.onAuthStateChanged(async user => {
             if (user) {
-                const rolesDoc = await db.collection('admin_role').doc(user.email).get();
+                const rolesDoc = await db.collection('admin_roles').doc(user.email).get();
                 if (rolesDoc.exists) {
                     userRole = rolesDoc.data().role;
                 } else {
@@ -763,21 +763,49 @@
                     return;
                 }
 
+                const today = new Date();
+                const currentYear = today.getFullYear();
+                
                 querySnapshot.forEach((doc) => {
                     const customer = doc.data();
                     const card = document.createElement('div');
                     card.classList.add('customer-card');
+
+                    let isServiceDue = false;
+                    let warningText = '';
+
+                    if (customer.วันที่ติดตั้ง) {
+                        const installDate = new Date(customer.วันที่ติดตั้ง);
+                        const installMonth = installDate.getMonth();
+                        const installDay = installDate.getDate();
+
+                        const nextServiceDate = new Date(currentYear, installMonth, installDay);
+                        if (nextServiceDate < today) {
+                            nextServiceDate.setFullYear(currentYear + 1);
+                        }
+                        
+                        const oneMonthBefore = new Date(nextServiceDate);
+                        oneMonthBefore.setMonth(nextServiceDate.getMonth() - 1);
+
+                        if (today >= oneMonthBefore && today <= nextServiceDate) {
+                            isServiceDue = true;
+                            warningText = 'ถึงเวลาครบรอบเซอวิสประจำปีแล้ว';
+                        }
+                    }
+                    
+                    if (isServiceDue) {
+                        card.classList.add('blink');
+                    }
                     
                     let buttonsHtml = '';
                     if (role === 'admin') {
                         buttonsHtml = `
                             <button class="edit-button" onclick="startEdit('${doc.id}', '${customer.ชื่อ || ''}', '${customer.เบอร์โทร || ''}', '${customer.ที่อยู่ || ''}', '${customer.วันที่ติดตั้ง || ''}', '${customer.ปีการรับประกัน || ''}', '${customer.อินเวอร์เตอร์รุ่น || ''}', '${customer.หมายเลขซีเรียลอินเวอร์เตอร์ || ''}', '${customer.ยี่ห้อรุ่นแผง || ''}', '${customer.จำนวนแผง || ''}', '${customer.ละติจูด || ''}', '${customer.ลองจิจูด || ''}', '${customer.รูปภาพ1 || ''}', '${customer.รูปภาพ2 || ''}')">แก้ไข</button>
                             <button class="delete-button" onclick="deleteCustomerData('${doc.id}')">ลบ</button>
+                            ${isServiceDue ? `<button class="service-button" onclick="markAsServiced('${doc.id}')">เซอร์วิสแล้ว</button>` : ''}
                         `;
                     } else if (role === 'editor') {
-                         buttonsHtml = '';
-                    } else {
-                         buttonsHtml = '';
+                        buttonsHtml = `<button class="edit-button" onclick="startEdit('${doc.id}', '${customer.ชื่อ || ''}', '${customer.เบอร์โทร || ''}', '${customer.ที่อยู่ || ''}', '${customer.วันที่ติดตั้ง || ''}', '${customer.ปีการรับประกัน || ''}', '${customer.อินเวอร์เตอร์รุ่น || ''}', '${customer.หมายเลขซีเรียลอินเวอร์เตอร์ || ''}', '${customer.ยี่ห้อรุ่นแผง || ''}', '${customer.จำนวนแผง || ''}', '${customer.ละติจูด || ''}', '${customer.ลองจิจูด || ''}', '${customer.รูปภาพ1 || ''}', '${customer.รูปภาพ2 || ''}')">แก้ไข</button>`;
                     }
 
                     if (customer.ละติจูด && customer.ลองจิจูด) {
@@ -795,6 +823,7 @@
                             <p><strong>หมายเลขซีเรียลอินเวอร์เตอร์:</strong> ${customer.หมายเลขซีเรียลอินเวอร์เตอร์ || '-'}</p>
                             <p><strong>ยี่ห้อและรุ่นแผง:</strong> ${customer.ยี่ห้อรุ่นแผง || '-'}</p>
                             <p><strong>จำนวนแผงที่ใช้:</strong> ${customer.จำนวนแผง || '-'}</p>
+                            ${isServiceDue ? `<p class="warning-text">${warningText}</p>` : ''}
                         </div>
                         <div class="customer-card-images">
                             ${customer.รูปภาพ1 ? `<img src="${customer.รูปภาพ1}" class="customer-card-image" alt="รูปภาพลูกค้า 1">` : ''}
@@ -811,6 +840,30 @@
                 const customerList = document.getElementById("customer-list");
                 customerList.innerHTML = '<p class="error">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>';
             });
+        }
+
+        async function markAsServiced(docId, installDateString) {
+            if (!auth.currentUser || userRole !== 'admin') {
+                alert("คุณไม่มีสิทธิ์อัปเดตสถานะเซอร์วิส");
+                return;
+            }
+
+            if (confirm("คุณแน่ใจหรือไม่ว่าได้ทำการเซอร์วิสแล้ว?")) {
+                const oldDate = new Date(installDateString);
+                const newDate = new Date(oldDate);
+                newDate.setFullYear(oldDate.getFullYear() + 1);
+
+                try {
+                    await db.collection("Promtong").doc(docId).update({
+                        วันที่ติดตั้ง: newDate.toISOString().substring(0, 10),
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    alert("อัปเดตสถานะเซอร์วิสสำเร็จแล้ว!");
+                } catch (error) {
+                    console.error("เกิดข้อผิดพลาดในการอัปเดตสถานะเซอร์วิส: ", error);
+                    alert("เกิดข้อผิดพลาดในการอัปเดตสถานะเซอร์วิส: " + error.message);
+                }
+            }
         }
     </script>
 </body>
