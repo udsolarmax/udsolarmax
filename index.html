@@ -84,6 +84,13 @@
             display: block;
             background-color: #eee;
         }
+        #map {
+            height: 400px;
+            width: 100%;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            margin-top: 15px;
+        }
         .data-list {
             display: flex;
             flex-direction: column;
@@ -139,11 +146,17 @@
         .card-buttons .delete-button {
             background-color: #d93025;
         }
+        .card-buttons .map-button {
+            background-color: #4CAF50;
+        }
         .edit-button:hover {
             background-color: #e68a00;
         }
         .delete-button:hover {
             background-color: #b3261e;
+        }
+        .map-button:hover {
+            background-color: #45a049;
         }
         .error {
             color: #d93025;
@@ -162,6 +175,11 @@
             <input type="tel" id="phone" placeholder="เบอร์โทรศัพท์" required>
             <input type="text" id="address" placeholder="ที่อยู่" required>
             
+            <p><strong>บันทึกพิกัดบนแผนที่:</strong> คลิกบนแผนที่เพื่อปักหมุด</p>
+            <div id="map"></div>
+            <input type="hidden" id="latitude">
+            <input type="hidden" id="longitude">
+
             <div class="image-upload-section">
                 <div class="image-upload-box">
                     <label for="imageUpload1">อัปโหลดรูปภาพ 1</label>
@@ -189,6 +207,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-storage.js"></script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&callback=initMap"></script>
     
     <script>
         const firebaseConfig = {
@@ -207,7 +226,38 @@
         const storage = firebase.storage();
 
         let isEditing = false;
-        let originalImages = { image1: null, image2: null }; 
+        let originalImages = { image1: null, image2: null };
+        
+        let map;
+        let marker;
+
+        function initMap() {
+            const defaultLocation = { lat: 17.412198, lng: 102.781617 }; // พิกัดเริ่มต้น: จังหวัดอุดรธานี
+            map = new google.maps.Map(document.getElementById("map"), {
+                center: defaultLocation,
+                zoom: 12,
+            });
+
+            marker = new google.maps.Marker({
+                map: map,
+                position: defaultLocation,
+                draggable: true,
+            });
+
+            // อัปเดตพิกัดเมื่อลากหมุด
+            marker.addListener("dragend", () => {
+                const newPos = marker.getPosition();
+                document.getElementById('latitude').value = newPos.lat();
+                document.getElementById('longitude').value = newPos.lng();
+            });
+
+            // อัปเดตพิกัดเมื่อคลิกบนแผนที่
+            map.addListener("click", (event) => {
+                marker.setPosition(event.latLng);
+                document.getElementById('latitude').value = event.latLng.lat();
+                document.getElementById('longitude').value = event.latLng.lng();
+            });
+        }
         
         function previewImage(event, previewId) {
             const reader = new FileReader();
@@ -242,11 +292,13 @@
             const name = document.getElementById('name').value;
             const phone = document.getElementById('phone').value;
             const address = document.getElementById('address').value;
+            const latitude = document.getElementById('latitude').value;
+            const longitude = document.getElementById('longitude').value;
             const imageFile1 = document.getElementById('imageUpload1').files[0];
             const imageFile2 = document.getElementById('imageUpload2').files[0];
 
-            if (!name || !phone || !address) {
-                alert("กรุณากรอกข้อมูล ชื่อ เบอร์โทร และที่อยู่ ให้ครบถ้วน");
+            if (!name || !phone || !address || !latitude || !longitude) {
+                alert("กรุณากรอกข้อมูล ชื่อ เบอร์โทร ที่อยู่ และปักหมุดบนแผนที่ให้ครบถ้วน");
                 return;
             }
 
@@ -263,6 +315,8 @@
                 ชื่อ: name,
                 เบอร์โทร: phone,
                 ที่อยู่: address,
+                ละติจูด: parseFloat(latitude),
+                ลองจิจูด: parseFloat(longitude),
                 รูปภาพ1: imageUrl1,
                 รูปภาพ2: imageUrl2,
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
@@ -297,6 +351,8 @@
             document.getElementById('phone').value = '';
             document.getElementById('address').value = '';
             document.getElementById('docId').value = '';
+            document.getElementById('latitude').value = '';
+            document.getElementById('longitude').value = '';
             document.getElementById('submit-button').textContent = 'บันทึกข้อมูล';
             document.getElementById('form-title').textContent = 'บันทึกข้อมูลลูกค้า';
             
@@ -308,11 +364,14 @@
             document.getElementById('imagePreview2').src = '#';
             document.getElementById('imagePreview2').style.display = 'none';
 
+            // รีเซ็ตแผนที่กลับไปที่ตำแหน่งเริ่มต้น
+            initMap();
+
             isEditing = false;
             originalImages = { image1: null, image2: null };
         }
 
-        async function startEdit(docId, name, phone, address, image1, image2) {
+        async function startEdit(docId, name, phone, address, latitude, longitude, image1, image2) {
             const password = prompt("กรุณาใส่รหัสผ่านเพื่อแก้ไข:");
             if (password !== "pairoj2112") {
                 alert("รหัสผ่านไม่ถูกต้อง");
@@ -324,6 +383,8 @@
             document.getElementById('name').value = name;
             document.getElementById('phone').value = phone;
             document.getElementById('address').value = address;
+            document.getElementById('latitude').value = latitude;
+            document.getElementById('longitude').value = longitude;
             document.getElementById('submit-button').textContent = 'บันทึกการแก้ไข';
             document.getElementById('form-title').textContent = 'แก้ไขข้อมูลลูกค้า';
             
@@ -345,6 +406,13 @@
                 preview2.style.display = 'block';
             } else {
                 preview2.style.display = 'none';
+            }
+            
+            // ปรับแผนที่และหมุดไปที่พิกัดที่บันทึกไว้
+            if (latitude && longitude) {
+                const position = { lat: parseFloat(latitude), lng: parseFloat(longitude) };
+                map.setCenter(position);
+                marker.setPosition(position);
             }
         }
 
@@ -391,7 +459,8 @@
                         ${customer.รูปภาพ2 ? `<img src="${customer.รูปภาพ2}" class="customer-card-image" alt="รูปภาพลูกค้า 2">` : ''}
                     </div>
                     <div class="card-buttons">
-                        <button class="edit-button" onclick="startEdit('${doc.id}', '${customer.ชื่อ || ''}', '${customer.เบอร์โทร || ''}', '${customer.ที่อยู่ || ''}', '${customer.รูปภาพ1 || ''}', '${customer.รูปภาพ2 || ''}')">แก้ไข</button>
+                        <button class="map-button" onclick="showMap('${customer.ละติจูด}', '${customer.ลองจิจูด}', '${customer.ชื่อ}')">ดูแผนที่</button>
+                        <button class="edit-button" onclick="startEdit('${doc.id}', '${customer.ชื่อ || ''}', '${customer.เบอร์โทร || ''}', '${customer.ที่อยู่ || ''}', '${customer.ละติจูด || ''}', '${customer.ลองจิจูด || ''}', '${customer.รูปภาพ1 || ''}', '${customer.รูปภาพ2 || ''}')">แก้ไข</button>
                         <button class="delete-button" onclick="deleteCustomerData('${doc.id}')">ลบ</button>
                     </div>
                 `;
@@ -402,6 +471,15 @@
             const customerList = document.getElementById("customer-list");
             customerList.innerHTML = '<p class="error">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>';
         });
+
+        function showMap(lat, lng, name) {
+            if (!lat || !lng) {
+                alert("ไม่มีข้อมูลพิกัดสำหรับลูกค้ารายนี้");
+                return;
+            }
+            const url = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+            window.open(url, '_blank');
+        }
 
     </script>
 </body>
