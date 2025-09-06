@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>แอปพลิเคชันข้อมูลลูกค้าพร้อมรูปถ่าย</title>
+    <title>แอปพลิเคชันข้อมูลลูกค้าพร้อมรูปถ่ายและแก้ไข</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -97,6 +97,7 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
             display: flex;
             gap: 15px;
+            position: relative;
         }
         .customer-card-info {
             flex: 1;
@@ -119,6 +120,20 @@
         .customer-card strong {
             color: #555;
         }
+        .edit-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #ff9800;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .edit-button:hover {
+            background-color: #e68a00;
+        }
         .error {
             color: #d93025;
             text-align: center;
@@ -128,9 +143,10 @@
 <body>
 
     <div class="container">
-        <h1>บันทึกข้อมูลลูกค้าพร้อมรูปถ่าย</h1>
+        <h1 id="form-title">บันทึกข้อมูลลูกค้า</h1>
 
         <div class="form-section">
+            <input type="hidden" id="docId">
             <input type="text" id="name" placeholder="ชื่อ-นามสกุล" required>
             <input type="tel" id="phone" placeholder="เบอร์โทรศัพท์" required>
             <input type="text" id="address" placeholder="ที่อยู่" required>
@@ -148,7 +164,7 @@
                 </div>
             </div>
 
-            <button onclick="saveCustomerData()">บันทึกข้อมูล</button>
+            <button id="submit-button" onclick="saveCustomerData()">บันทึกข้อมูล</button>
         </div>
 
         <h2>รายการข้อมูลลูกค้า</h2>
@@ -159,12 +175,13 @@
 
     </div>
 
+    
+
     <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-storage.js"></script>
     
     <script>
-        // ข้อมูลการตั้งค่าโปรเจกต์ของคุณจากภาพที่ให้มา
         const firebaseConfig = {
             apiKey: "AIzaSyDr77gDhuHb_ZTAAKwEDUKZjQ_abaMOsY8",
             authDomain: "udsolarmaxservice.firebaseapp.com",
@@ -175,29 +192,29 @@
             measurementId: "G-TJ7256T0NW"
         };
 
-        // เริ่มต้น Firebase
         firebase.initializeApp(firebaseConfig);
         
         const db = firebase.firestore();
-        const storage = firebase.storage(); // อ้างอิงถึง Firebase Storage
+        const storage = firebase.storage();
 
-        // ฟังก์ชันสำหรับแสดงพรีวิวรูปภาพ
+        let isEditing = false;
+        let originalImages = { image1: null, image2: null }; // เก็บ URL รูปภาพเดิม
+        
         function previewImage(event, previewId) {
             const reader = new FileReader();
             reader.onload = function(){
                 const output = document.getElementById(previewId);
                 output.src = reader.result;
-                output.style.display = 'block'; // แสดงรูปพรีวิว
+                output.style.display = 'block';
             };
             reader.readAsDataURL(event.target.files[0]);
         }
 
-        // ฟังก์ชันสำหรับอัปโหลดรูปภาพไปยัง Firebase Storage
         async function uploadImage(file) {
             if (!file) return null;
 
             const storageRef = storage.ref();
-            const fileName = `customer_images/${Date.now()}_${file.name}`; // สร้างชื่อไฟล์ที่ไม่ซ้ำกัน
+            const fileName = `customer_images/${Date.now()}_${file.name}`;
             const imageRef = storageRef.child(fileName);
 
             try {
@@ -211,7 +228,6 @@
             }
         }
 
-        // ฟังก์ชันสำหรับบันทึกข้อมูลลูกค้า
         async function saveCustomerData() {
             const name = document.getElementById('name').value;
             const phone = document.getElementById('phone').value;
@@ -219,49 +235,110 @@
             const imageFile1 = document.getElementById('imageUpload1').files[0];
             const imageFile2 = document.getElementById('imageUpload2').files[0];
 
-            if (name && phone && address) {
-                // อัปโหลดรูปภาพก่อน
-                alert("กำลังบันทึกข้อมูลและอัปโหลดรูปภาพ กรุณารอสักครู่...");
-                const imageUrl1 = await uploadImage(imageFile1);
-                const imageUrl2 = await uploadImage(imageFile2);
+            if (!name || !phone || !address) {
+                alert("กรุณากรอกข้อมูล ชื่อ เบอร์โทร และที่อยู่ ให้ครบถ้วน");
+                return;
+            }
 
-                db.collection("Promtong").add({
-                    ชื่อ: name,
-                    เบอร์โทร: phone,
-                    ที่อยู่: address,
-                    รูปภาพ1: imageUrl1, // เก็บ URL ของรูปภาพ
-                    รูปภาพ2: imageUrl2, // เก็บ URL ของรูปภาพ
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            alert("กำลังบันทึกข้อมูลและอัปโหลดรูปภาพ กรุณารอสักครู่...");
+            
+            const imageUrl1 = imageFile1 ? await uploadImage(imageFile1) : originalImages.image1;
+            const imageUrl2 = imageFile2 ? await uploadImage(imageFile2) : originalImages.image2;
+            
+            const dataToSave = {
+                ชื่อ: name,
+                เบอร์โทร: phone,
+                ที่อยู่: address,
+                รูปภาพ1: imageUrl1,
+                รูปภาพ2: imageUrl2,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            if (isEditing) {
+                const docId = document.getElementById('docId').value;
+                db.collection("Promtong").doc(docId).update(dataToSave)
+                .then(() => {
+                    console.log("แก้ไขข้อมูลสำเร็จ!");
+                    alert("แก้ไขข้อมูลลูกค้าสำเร็จ!");
+                    resetForm();
                 })
+                .catch((error) => {
+                    console.error("เกิดข้อผิดพลาดในการแก้ไข: ", error);
+                    alert("เกิดข้อผิดพลาดในการแก้ไขข้อมูล");
+                });
+            } else {
+                db.collection("Promtong").add(dataToSave)
                 .then((docRef) => {
                     console.log("บันทึกข้อมูลสำเร็จ! Document ID: ", docRef.id);
                     alert("บันทึกข้อมูลลูกค้าสำเร็จ!");
-                    // ล้างฟอร์มและรีเซ็ตรูปพรีวิว
-                    document.getElementById('name').value = '';
-                    document.getElementById('phone').value = '';
-                    document.getElementById('address').value = '';
-                    
-                    document.getElementById('imageUpload1').value = '';
-                    document.getElementById('imagePreview1').src = '#';
-                    document.getElementById('imagePreview1').style.display = 'none';
-
-                    document.getElementById('imageUpload2').value = '';
-                    document.getElementById('imagePreview2').src = '#';
-                    document.getElementById('imagePreview2').style.display = 'none';
+                    resetForm();
                 })
                 .catch((error) => {
                     console.error("เกิดข้อผิดพลาดในการบันทึก: ", error);
                     alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล");
                 });
-            } else {
-                alert("กรุณากรอกข้อมูล ชื่อ เบอร์โทร และที่อยู่ ให้ครบถ้วน");
             }
         }
 
-        // ฟังก์ชันสำหรับดึงข้อมูลและแสดงผลแบบเรียลไทม์
+        function resetForm() {
+            document.getElementById('name').value = '';
+            document.getElementById('phone').value = '';
+            document.getElementById('address').value = '';
+            document.getElementById('docId').value = '';
+            document.getElementById('submit-button').textContent = 'บันทึกข้อมูล';
+            document.getElementById('form-title').textContent = 'บันทึกข้อมูลลูกค้า';
+            
+            document.getElementById('imageUpload1').value = '';
+            document.getElementById('imagePreview1').src = '#';
+            document.getElementById('imagePreview1').style.display = 'none';
+
+            document.getElementById('imageUpload2').value = '';
+            document.getElementById('imagePreview2').src = '#';
+            document.getElementById('imagePreview2').style.display = 'none';
+
+            isEditing = false;
+            originalImages = { image1: null, image2: null };
+        }
+
+        async function startEdit(docId, name, phone, address, image1, image2) {
+            const password = prompt("กรุณาใส่รหัสผ่านเพื่อแก้ไข:");
+            if (password !== "pairoj2112") {
+                alert("รหัสผ่านไม่ถูกต้อง");
+                return;
+            }
+            
+            isEditing = true;
+            document.getElementById('docId').value = docId;
+            document.getElementById('name').value = name;
+            document.getElementById('phone').value = phone;
+            document.getElementById('address').value = address;
+            document.getElementById('submit-button').textContent = 'บันทึกการแก้ไข';
+            document.getElementById('form-title').textContent = 'แก้ไขข้อมูลลูกค้า';
+            
+            originalImages.image1 = image1;
+            originalImages.image2 = image2;
+
+            const preview1 = document.getElementById('imagePreview1');
+            const preview2 = document.getElementById('imagePreview2');
+            
+            if (image1) {
+                preview1.src = image1;
+                preview1.style.display = 'block';
+            } else {
+                preview1.style.display = 'none';
+            }
+
+            if (image2) {
+                preview2.src = image2;
+                preview2.style.display = 'block';
+            } else {
+                preview2.style.display = 'none';
+            }
+        }
+
         db.collection("Promtong").orderBy("timestamp", "desc").onSnapshot((querySnapshot) => {
             const customerList = document.getElementById("customer-list");
-            customerList.innerHTML = ''; // ล้างข้อมูลเก่า
+            customerList.innerHTML = '';
             
             if (querySnapshot.empty) {
                 customerList.innerHTML = '<p style="text-align: center;">ยังไม่มีข้อมูลลูกค้า</p>';
@@ -282,6 +359,7 @@
                         ${customer.รูปภาพ1 ? `<img src="${customer.รูปภาพ1}" class="customer-card-image" alt="รูปภาพลูกค้า 1">` : ''}
                         ${customer.รูปภาพ2 ? `<img src="${customer.รูปภาพ2}" class="customer-card-image" alt="รูปภาพลูกค้า 2">` : ''}
                     </div>
+                    <button class="edit-button" onclick="startEdit('${doc.id}', '${customer.ชื่อ || ''}', '${customer.เบอร์โทร || ''}', '${customer.ที่อยู่ || ''}', '${customer.รูปภาพ1 || ''}', '${customer.รูปภาพ2 || ''}')">แก้ไข</button>
                 `;
                 customerList.appendChild(card);
             });
