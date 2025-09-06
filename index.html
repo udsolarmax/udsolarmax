@@ -355,16 +355,12 @@
                 const nextServiceDate = new Date(lastServiceDate.getFullYear() + serviceInterval, lastServiceDate.getMonth(), lastServiceDate.getDate());
                 
                 const isServiceDue = today >= nextServiceDate;
-                const isWarrantyExpired = today > new Date(lastServiceDate.getFullYear() + serviceInterval, lastServiceDate.getMonth(), lastServiceDate.getDate() + 30);
+                const isWarrantyExpired = today > new Date(lastServiceDate.getFullYear() + serviceInterval, lastServiceDate.getMonth(), lastServiceDate.getDate());
                 
                 const customerCard = document.createElement('div');
                 let cardClass = 'customer-card mb-4';
                 let notificationText = '';
                 
-                const lastServiceYear = lastServiceDate.getFullYear();
-                const nextServiceYear = lastServiceYear + serviceInterval;
-                
-                // Check if the service is due but not yet marked as 'serviced'
                 if (isServiceDue && !isWarrantyExpired) {
                     cardClass += ' service-due';
                     notificationText = 'ถึงรอบเซอร์วิสแล้ว';
