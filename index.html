@@ -222,6 +222,21 @@
             cursor: pointer;
             display: none;
         }
+        /* เพิ่ม CSS สำหรับการแจ้งเตือน */
+        @keyframes blink-animation {
+            to {
+                visibility: hidden;
+            }
+        }
+        .blink {
+            animation: blink-animation 1s steps(5, start) infinite;
+            border: 2px solid red;
+        }
+        .warning-text {
+            color: red;
+            font-weight: bold;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -738,10 +753,43 @@
                     return;
                 }
 
+                const today = new Date();
+                const currentYear = today.getFullYear();
+                const currentDate = today.getDate();
+                const currentMonth = today.getMonth();
+
                 querySnapshot.forEach((doc) => {
                     const customer = doc.data();
                     const card = document.createElement('div');
                     card.classList.add('customer-card');
+
+                    let isServiceDue = false;
+                    let warningText = '';
+
+                    // Check for annual service
+                    if (customer.วันที่ติดตั้ง) {
+                        const installDate = new Date(customer.วันที่ติดตั้ง);
+                        const installMonth = installDate.getMonth();
+                        const installDay = installDate.getDate();
+
+                        const nextServiceDate = new Date(currentYear, installMonth, installDay);
+                        if (nextServiceDate < today) {
+                            nextServiceDate.setFullYear(currentYear + 1);
+                        }
+                        
+                        // Check if within one month of service date
+                        const oneMonthBefore = new Date(nextServiceDate);
+                        oneMonthBefore.setMonth(nextServiceDate.getMonth() - 1);
+
+                        if (today >= oneMonthBefore && today <= nextServiceDate) {
+                            isServiceDue = true;
+                            warningText = 'ถึงเวลาครบรอบเซอวิสประจำปีแล้ว';
+                        }
+                    }
+                    
+                    if (isServiceDue) {
+                        card.classList.add('blink');
+                    }
                     
                     let buttonsHtml = '';
                     if (role === 'admin') {
@@ -770,6 +818,7 @@
                             <p><strong>หมายเลขซีเรียลอินเวอร์เตอร์:</strong> ${customer.หมายเลขซีเรียลอินเวอร์เตอร์ || '-'}</p>
                             <p><strong>ยี่ห้อและรุ่นแผง:</strong> ${customer.ยี่ห้อรุ่นแผง || '-'}</p>
                             <p><strong>จำนวนแผงที่ใช้:</strong> ${customer.จำนวนแผง || '-'}</p>
+                            ${isServiceDue ? `<p class="warning-text">${warningText}</p>` : ''}
                         </div>
                         <div class="customer-card-images">
                             ${customer.รูปภาพ1 ? `<img src="${customer.รูปภาพ1}" class="customer-card-image" alt="รูปภาพลูกค้า 1">` : ''}
