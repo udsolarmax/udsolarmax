@@ -400,9 +400,7 @@
             const formSection = document.getElementById('form-section');
             const logoButtons = document.getElementById('logo-buttons');
             const saveButton = document.getElementById('submit-button');
-            const mapInputs = document.querySelectorAll('#latitude, #longitude');
-            const mapButtons = document.querySelectorAll('.form-section button');
-            
+
             if (role === 'admin' || role === 'editor') {
                 formSection.style.display = 'flex';
                 saveButton.style.display = 'block';
@@ -413,29 +411,8 @@
 
             if (role === 'admin') {
                 logoButtons.style.display = 'flex';
-                mapInputs.forEach(input => input.disabled = false);
-                mapButtons.forEach(button => button.disabled = false);
-                document.getElementById('logo-upload').disabled = false;
-                document.querySelector('.delete-logo-button').disabled = false;
-            } else if (role === 'editor') {
-                 logoButtons.style.display = 'none';
-                 mapInputs.forEach(input => input.disabled = true);
-                 mapButtons.forEach(button => button.disabled = true);
-                 document.getElementById('logo-upload').disabled = true;
-                 document.querySelector('.delete-logo-button').disabled = true;
-            } else { // viewer
+            } else {
                 logoButtons.style.display = 'none';
-                mapInputs.forEach(input => input.disabled = true);
-                mapButtons.forEach(button => button.disabled = true);
-                document.getElementById('logo-upload').disabled = true;
-                document.querySelector('.delete-logo-button').disabled = true;
-            }
-
-            if (isEditing) {
-                if (role === 'editor') {
-                    // Editor can only add, not edit existing data
-                    formSection.style.display = 'none';
-                }
             }
         }
 
@@ -558,7 +535,7 @@
             }
         }
 
-        async function previewImage(event, previewId) {
+        function previewImage(event, previewId) {
             const reader = new FileReader();
             reader.onload = function(){
                 const output = document.getElementById(previewId);
@@ -703,7 +680,7 @@
         }
 
         async function startEdit(docId, name, phone, address, installDate, warrantyYears, inverterModel, inverterSerial, panelModel, panelCount, latitude, longitude, image1, image2) {
-            if(userRole !== 'admin' && userRole !== 'editor') {
+            if(userRole !== 'admin') {
                 alert("คุณไม่มีสิทธิ์แก้ไขข้อมูลลูกค้า");
                 return;
             }
@@ -828,15 +805,18 @@
                             ${isServiceDue ? `<button class="service-button" onclick="markAsServiced('${doc.id}', '${customer.วันที่ติดตั้ง}')">เซอร์วิสแล้ว</button>` : ''}
                         `;
                     } else if (role === 'editor') {
-                        buttonsHtml = `
+                         buttonsHtml = `
                             <button class="edit-button" onclick="startEdit('${doc.id}', '${customer.ชื่อ || ''}', '${customer.เบอร์โทร || ''}', '${customer.ที่อยู่ || ''}', '${customer.วันที่ติดตั้ง || ''}', '${customer.ปีการรับประกัน || ''}', '${customer.อินเวอร์เตอร์รุ่น || ''}', '${customer.หมายเลขซีเรียลอินเวอร์เตอร์ || ''}', '${customer.ยี่ห้อรุ่นแผง || ''}', '${customer.จำนวนแผง || ''}', '${customer.ละติจูด || ''}', '${customer.ลองจิจูด || ''}', '${customer.รูปภาพ1 || ''}', '${customer.รูปภาพ2 || ''}')">แก้ไข</button>
-                            ${isServiceDue ? `<button class="service-button" onclick="markAsServiced('${doc.id}', '${customer.วันที่ติดตั้ง}')">เซอร์วิสแล้ว</button>` : ''}
-                        `;
+                         `;
+                         if (isServiceDue) {
+                            buttonsHtml += `<button class="service-button" onclick="markAsServiced('${doc.id}', '${customer.วันที่ติดตั้ง}')">เซอร์วิสแล้ว</button>`;
+                        }
                     } else {
-                        // For viewer, only the map button is shown
-                        if (customer.ละติจูด && customer.ลองจิจูด) {
-                             buttonsHtml += `<button class="map-button" onclick="navigateTo('${customer.ละติจูด}', '${customer.ลองจิจูด}')">ดูแผนที่</button>`;
-                         }
+                         buttonsHtml = '';
+                    }
+
+                    if (customer.ละติจูด && customer.ลองจิจูด) {
+                        buttonsHtml += `<button class="map-button" onclick="navigateTo('${customer.ละติจูด}', '${customer.ลองจิจูด}')">ดูแผนที่</button>`;
                     }
 
                     card.innerHTML = `
