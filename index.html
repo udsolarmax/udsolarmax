@@ -4,13 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ระบบจัดการข้อมูลลูกค้า</title>
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts - Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
     <style>
@@ -110,10 +107,8 @@
         </div>
     </div>
     
-    <!-- Error/Success Message Display -->
     <div id="alert-container" class="mb-4"></div>
 
-    <!-- Customer Form -->
     <form id="customer-form" class="bg-gray-50 rounded-lg p-6 mb-6 shadow-sm">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="col-span-1 md:col-span-2 text-center text-sm text-gray-500">
@@ -197,7 +192,6 @@
         </button>
     </form>
 
-    <!-- Customers List -->
     <div class="bg-gray-50 rounded-lg p-6 shadow-sm">
         <h2 class="text-2xl font-bold text-gray-800 mb-4">รายชื่อลูกค้า</h2>
         <div id="customers-list" class="space-y-4">
@@ -205,7 +199,6 @@
         </div>
     </div>
     
-    <!-- Custom Modal -->
     <div id="custom-modal" class="modal-overlay hidden">
         <div class="modal-content">
             <h3 id="modal-title" class="text-lg font-bold mb-4">ยืนยันการลบข้อมูล</h3>
@@ -218,11 +211,31 @@
     </div>
 </div>
 
-<script>
-    const LOCAL_STORAGE_KEY = 'customerData';
-    let editMode = false;
-    let currentEditId = null;
+<script type="module">
+    // Import Firebase services
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, getDoc, setDoc, addDoc, doc, updateDoc, deleteDoc, query, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
+    // Firebase Configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyDY7TgdhUhb_ZTAAKWeDUKZJq_abaMOsY8",
+        authDomain: "udsolarmaxservice.firebaseapp.com",
+        projectId: "udsolarmaxservice",
+        storageBucket: "udsolarmaxservice.firebasestorage.app",
+        messagingSenderId: "701138550265",
+        appId: "1:701138550265:web:2467a654ff30e0c9a25128",
+        measurementId: "G-TJ725GT0NW"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    const storage = getStorage(app);
+    
+    // UI elements and variables
     const form = document.getElementById('customer-form');
     const submitBtn = document.getElementById('submit-btn');
     const customersList = document.getElementById('customers-list');
@@ -234,7 +247,8 @@
 
     const logoUploadInput = document.getElementById('logo-upload');
     const appLogo = document.getElementById('app-logo');
-    const logoLocalStorageKey = 'appLogo';
+    const logoDocId = 'app-logo';
+    const appConfigCollection = 'appConfig';
 
     const imageUploads = {
         'image-upload-1': 'image-display-1',
@@ -246,11 +260,6 @@
         'image-upload-2': 'image-preview-2',
         'image-upload-3': 'image-preview-3'
     };
-    const imagePlaceholders = {
-        'image-placeholder-1': 'เพิ่มรูปภาพ',
-        'image-placeholder-2': 'เพิ่มรูปภาพ',
-        'image-placeholder-3': 'เพิ่มรูปภาพ'
-    };
     
     const modal = document.getElementById('custom-modal');
     const modalTitle = document.getElementById('modal-title');
@@ -259,90 +268,187 @@
     const modalCancel = document.getElementById('modal-cancel');
     const alertContainer = document.getElementById('alert-container');
 
-    // Function to handle image upload and preview
-    function handleImageUpload(event, imageId) {
-        const file = event.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = document.getElementById(imageId);
-                img.src = e.target.result;
-                img.classList.remove('hidden');
-                document.getElementById(imagePreviewIds[event.target.id]).querySelector('span').classList.add('hidden');
-            };
-            reader.readAsDataURL(file);
+    let editMode = false;
+    let currentEditId = null;
+    let allCustomersData = [];
+
+    // Check auth state and initialize app
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            console.log('User is signed in:', user.uid);
+            loadAppConfig();
+            loadCustomers();
+        } else {
+            console.log('No user signed in. Signing in anonymously...');
+            signInAnonymously(auth);
+        }
+    });
+
+    // --- Firebase Functions ---
+    async function loadAppConfig() {
+        const docRef = doc(db, appConfigCollection, logoDocId);
+        try {
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                if (data.logo) {
+                    appLogo.src = data.logo;
+                }
+            } else {
+                console.log("No app logo found in Firestore.");
+            }
+        } catch (e) {
+            console.error("Error loading app config: ", e);
         }
     }
 
-    // Set up event listeners for image previews
-    Object.keys(imageUploads).forEach(uploadId => {
-        const uploadElement = document.getElementById(uploadId);
-        const previewElement = document.getElementById(imagePreviewIds[uploadId]);
-        
-        previewElement.addEventListener('click', () => {
-            uploadElement.click();
-        });
-        
-        uploadElement.addEventListener('change', (event) => {
-            handleImageUpload(event, imageUploads[uploadId]);
-        });
-    });
+    async function uploadImage(file) {
+        if (!file) return null;
+        try {
+            const fileName = `customer_images/${Date.now()}_${file.name}`;
+            const storageRef = ref(storage, fileName);
+            const snapshot = await uploadBytes(storageRef, file);
+            return await getDownloadURL(snapshot.ref);
+        } catch (e) {
+            console.error("Error uploading image: ", e);
+            showAlert('เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ', 'error');
+            return null;
+        }
+    }
 
-    // Handle logo upload and display
-    logoUploadInput.addEventListener('change', (event) => {
-        const file = event.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                appLogo.src = e.target.result;
-                localStorage.setItem(logoLocalStorageKey, e.target.result);
+    async function saveAppLogo(file) {
+        const logoData = await uploadImage(file);
+        if (logoData) {
+            try {
+                const docRef = doc(db, appConfigCollection, logoDocId);
+                await setDoc(docRef, { logo: logoData });
+                appLogo.src = logoData;
+                showAlert('อัปโหลดโลโก้สำเร็จ!', 'success');
+            } catch (e) {
+                console.error("Error saving app logo: ", e);
+                showAlert('เกิดข้อผิดพลาดในการอัปโหลดโลโก้', 'error');
+            }
+        }
+    }
+
+    async function loadCustomers() {
+        customersList.innerHTML = `<p class="text-center text-gray-500 py-4">กำลังโหลดข้อมูลลูกค้า...</p>`;
+        const customersRef = collection(db, "Promtong");
+        const q = query(customersRef);
+        
+        onSnapshot(q, (querySnapshot) => {
+            allCustomersData = [];
+            querySnapshot.forEach((doc) => {
+                allCustomersData.push({ id: doc.id, ...doc.data() });
+            });
+            renderCustomersUI(allCustomersData, 'all');
+        }, (error) => {
+            console.error("Error listening to customers data: ", error);
+            customersList.innerHTML = `<p class="text-center text-red-500 py-4">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>`;
+        });
+    }
+
+    async function saveCustomer(event) {
+        event.preventDefault();
+        
+        submitBtn.disabled = true;
+        submitBtn.textContent = editMode ? 'กำลังบันทึก...' : 'กำลังเพิ่มลูกค้า...';
+
+        try {
+            const customerData = {
+                customerName: document.getElementById('customer-name').value.trim(),
+                customerAddress: document.getElementById('customer-address').value.trim(),
+                customerPhone: document.getElementById('customer-phone').value.trim(),
+                googleMaps: document.getElementById('google-maps').value.trim(),
+                inverterModel: document.getElementById('inverter-model').value.trim(),
+                inverterSN: document.getElementById('inverter-sn').value.trim(),
+                panelModel: document.getElementById('panel-model').value.trim(),
+                panelCount: document.getElementById('panel-count').value.trim(),
+                installDate: document.getElementById('install-date').value,
+                serviceInterval: document.getElementById('service-interval').value
             };
-            reader.readAsDataURL(file);
-        }
-    });
 
-    // Function to show a custom alert message
-    function showAlert(message, type = 'success') {
-        const alertDiv = document.createElement('div');
-        alertDiv.className = `p-3 rounded-lg text-sm mb-2`;
-        if (type === 'success') {
-            alertDiv.classList.add('bg-green-100', 'text-green-700');
-        } else if (type === 'error') {
-            alertDiv.classList.add('bg-red-100', 'text-red-700');
+            if (editMode) {
+                const oldCustomerData = allCustomersData.find(c => c.id === currentEditId);
+                const newImage1 = document.getElementById('image-upload-1').files[0];
+                const newImage2 = document.getElementById('image-upload-2').files[0];
+                const newImage3 = document.getElementById('image-upload-3').files[0];
+
+                customerData.image1 = newImage1 ? await uploadImage(newImage1) : (oldCustomerData.image1 || null);
+                customerData.image2 = newImage2 ? await uploadImage(newImage2) : (oldCustomerData.image2 || null);
+                customerData.image3 = newImage3 ? await uploadImage(newImage3) : (oldCustomerData.image3 || null);
+
+                const docRef = doc(db, "Promtong", currentEditId);
+                await updateDoc(docRef, customerData);
+                showAlert('แก้ไขข้อมูลลูกค้าสำเร็จ!', 'success');
+            } else {
+                const image1 = await uploadImage(document.getElementById('image-upload-1').files[0]);
+                const image2 = await uploadImage(document.getElementById('image-upload-2').files[0]);
+                const image3 = await uploadImage(document.getElementById('image-upload-3').files[0]);
+
+                customerData.image1 = image1;
+                customerData.image2 = image2;
+                customerData.image3 = image3;
+                customerData.lastServiceDate = customerData.installDate;
+
+                await addDoc(collection(db, "Promtong"), customerData);
+                showAlert('บันทึกข้อมูลลูกค้าสำเร็จ!', 'success');
+            }
+            
+            form.reset();
+            resetImagePreviews();
+            editMode = false;
+            currentEditId = null;
+            submitBtn.textContent = 'เพิ่มลูกค้าใหม่';
+            submitBtn.disabled = false;
+
+        } catch (e) {
+            console.error("Error saving customer: ", e);
+            showAlert('เกิดข้อผิดพลาดในการบันทึกข้อมูล', 'error');
+            submitBtn.disabled = false;
+            submitBtn.textContent = editMode ? 'บันทึกการแก้ไข' : 'เพิ่มลูกค้าใหม่';
         }
-        alertDiv.textContent = message;
-        alertContainer.appendChild(alertDiv);
-        setTimeout(() => alertDiv.remove(), 5000);
+    }
+
+    async function deleteCustomer(id) {
+        try {
+            await deleteDoc(doc(db, "Promtong", id));
+            showAlert('ลบข้อมูลลูกค้าสำเร็จ!', 'success');
+        } catch (e) {
+            console.error("Error deleting document: ", e);
+            showAlert('เกิดข้อผิดพลาดในการลบข้อมูล', 'error');
+        }
     }
     
-    // Function to show the custom confirmation modal
-    function showModal(title, message, onConfirm) {
-        modalTitle.textContent = title;
-        modalMessage.textContent = message;
-        modalConfirm.onclick = onConfirm;
-        modalCancel.onclick = () => {
-            modal.classList.remove('flex');
-            modal.classList.add('hidden');
-        };
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
+    async function updateLastService(id) {
+        const today = mockDateInput.value || new Date().toISOString().slice(0, 10);
+        try {
+            const docRef = doc(db, "Promtong", id);
+            await updateDoc(docRef, { lastServiceDate: today });
+            showAlert('อัปเดตสถานะบริการแล้ว!', 'success');
+        } catch (e) {
+            console.error("Error updating service date: ", e);
+            showAlert('เกิดข้อผิดพลาดในการอัปเดต', 'error');
+        }
     }
 
-    // Function to render customers to the UI
-    function renderCustomers(filter = 'all') {
+    // --- UI Functions ---
+    function renderCustomersUI(customers, filter = 'all') {
         customersList.innerHTML = '';
-        const customers = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY)) || [];
         const today = mockDateInput.value ? new Date(mockDateInput.value) : new Date();
-        
+
         let filteredCustomers = customers;
         if (filter === 'service') {
             filteredCustomers = customers.filter(customer => {
+                if (!customer.lastServiceDate) return false;
                 const lastServiceDate = new Date(customer.lastServiceDate);
                 const serviceInterval = parseInt(customer.serviceInterval) || 0;
                 const nextServiceDate = new Date(lastServiceDate.getFullYear() + serviceInterval, lastServiceDate.getMonth(), lastServiceDate.getDate());
                 
-                // Show customers who are due for service
-                return today >= nextServiceDate;
+                const differenceInTime = nextServiceDate.getTime() - today.getTime();
+                const differenceInDays = differenceInTime / (1000 * 3600 * 24);
+                
+                return differenceInDays <= 30; // แจ้งเตือนเมื่อเหลือ 30 วันหรือน้อยกว่า
             });
         }
         
@@ -351,27 +457,20 @@
         } else {
             filteredCustomers.forEach(customer => {
                 const lastServiceDate = new Date(customer.lastServiceDate);
-                const installDate = new Date(customer.installDate);
                 const serviceInterval = parseInt(customer.serviceInterval) || 0;
                 const nextServiceDate = new Date(lastServiceDate.getFullYear() + serviceInterval, lastServiceDate.getMonth(), lastServiceDate.getDate());
                 
                 const isServiceDue = today >= nextServiceDate;
-                const isWarrantyExpired = today > new Date(installDate.getFullYear() + serviceInterval, installDate.getMonth(), installDate.getDate());
-                
+                const isWarrantyExpired = today > new Date(lastServiceDate.getFullYear() + serviceInterval, lastServiceDate.getMonth(), lastServiceDate.getDate());
+
                 const customerCard = document.createElement('div');
-                let cardClass = 'customer-card mb-4';
-                let notificationText = '';
+                customerCard.className = `customer-card mb-4 ${isServiceDue ? 'service-due' : ''}`;
                 
+                let warrantyStatusHTML = '';
                 if (isWarrantyExpired) {
-                    cardClass += ' service-due';
-                    notificationText = 'ระบบหมดการรับประกันแล้ว';
-                } else if (isServiceDue) {
-                    cardClass += ' service-due';
-                    notificationText = 'ถึงรอบเซอร์วิสแล้ว';
+                    warrantyStatusHTML = `<p class="mt-2 text-center warranty-expired-text font-bold text-lg">ระบบหมดการรับประกันแล้ว</p>`;
                 }
-
-                customerCard.className = cardClass;
-
+                
                 const googleMapsLink = customer.googleMaps ? `<a href="${customer.googleMaps}" target="_blank" class="text-blue-500 hover:underline">ดูแผนที่</a>` : '';
 
                 customerCard.innerHTML = `
@@ -387,9 +486,8 @@
                             <p class="text-sm"><span class="font-semibold">รุ่นแผง:</span> ${customer.panelModel}</p>
                             <p class="text-sm"><span class="font-semibold">จำนวนแผง:</span> ${customer.panelCount}</p>
                             <p class="text-sm"><span class="font-semibold">เซอร์วิสล่าสุด:</span> ${customer.lastServiceDate}</p>
-                            <p class="text-sm"><span class="font-semibold">ระยะเวลาเซอร์วิส:</span> ${customer.serviceInterval} ปี</p>
                             <p class="text-sm"><span class="font-semibold">นัดเซอร์วิสครั้งต่อไป:</span> ${nextServiceDate.toLocaleDateString('th-TH')}</p>
-                            ${notificationText ? `<p class="mt-2 text-center warranty-expired-text font-bold text-lg">${notificationText}</p>` : ''}
+                            ${warrantyStatusHTML}
                         </div>
                         <div class="space-y-4">
                             ${customer.image3 ? `<div class="w-full h-auto"><img src="${customer.image3}" alt="Image 3" class="w-full h-auto object-cover rounded-md shadow"></div>` : `<div class="w-full h-auto text-center py-6 text-gray-400">ไม่มีรูปภาพ 3</div>`}
@@ -404,7 +502,7 @@
                         </div>
                     </div>
                     <div class="flex justify-end mt-4 space-x-2">
-                        ${isServiceDue && !isWarrantyExpired ? `<button class="btn btn-success text-sm px-3 py-1" data-action="service" data-id="${customer.id}">บริการแล้ว</button>` : ''}
+                        ${isServiceDue ? `<button class="btn btn-success text-sm px-3 py-1" data-action="service" data-id="${customer.id}">บริการแล้ว</button>` : ''}
                         <button class="btn btn-primary text-sm px-3 py-1" data-action="edit" data-id="${customer.id}">แก้ไข</button>
                         <button class="btn btn-danger text-sm px-3 py-1" data-action="delete" data-id="${customer.id}">ลบ</button>
                     </div>
@@ -414,88 +512,30 @@
         }
     }
 
-    // Function to handle form submission and save data to localStorage
-    function saveCustomer(event) {
-        event.preventDefault();
-        
-        const customerName = document.getElementById('customer-name').value.trim();
-        const customerAddress = document.getElementById('customer-address').value.trim();
-        const customerPhone = document.getElementById('customer-phone').value.trim();
-        const googleMaps = document.getElementById('google-maps').value.trim();
-        const inverterModel = document.getElementById('inverter-model').value.trim();
-        const inverterSN = document.getElementById('inverter-sn').value.trim();
-        const panelModel = document.getElementById('panel-model').value.trim();
-        const panelCount = document.getElementById('panel-count').value.trim();
-        const installDate = document.getElementById('install-date').value;
-        const serviceInterval = document.getElementById('service-interval').value;
-
-        const image1 = document.getElementById('image-display-1').src;
-        const image2 = document.getElementById('image-display-2').src;
-        const image3 = document.getElementById('image-display-3').src;
-
-        if (!customerName || !customerAddress || !customerPhone || !installDate || !serviceInterval) {
-            showAlert('กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน', 'error');
-            return;
-        }
-
-        let customers = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY)) || [];
-        
-        if (editMode) {
-            const customerToUpdate = customers.find(c => c.id === currentEditId);
-            if (customerToUpdate) {
-                customerToUpdate.customerName = customerName;
-                customerToUpdate.customerAddress = customerAddress;
-                customerToUpdate.customerPhone = customerPhone;
-                customerToUpdate.googleMaps = googleMaps;
-                customerToUpdate.inverterModel = inverterModel;
-                customerToUpdate.inverterSN = inverterSN;
-                customerToUpdate.panelModel = panelModel;
-                customerToUpdate.panelCount = panelCount;
-                customerToUpdate.installDate = installDate;
-                customerToUpdate.serviceInterval = serviceInterval;
-                customerToUpdate.image1 = image1;
-                customerToUpdate.image2 = image2;
-                customerToUpdate.image3 = image3;
-            }
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(customers));
-            showAlert('แก้ไขข้อมูลลูกค้าสำเร็จ!', 'success');
-            editMode = false;
-            currentEditId = null;
-            submitBtn.textContent = 'เพิ่มลูกค้าใหม่';
-        } else {
-            const newCustomer = {
-                id: Date.now().toString(),
-                customerName,
-                customerAddress,
-                customerPhone,
-                googleMaps,
-                inverterModel,
-                inverterSN,
-                panelModel,
-                panelCount,
-                installDate,
-                lastServiceDate: installDate,
-                serviceInterval,
-                image1: image1 === window.location.href ? '' : image1,
-                image2: image2 === window.location.href ? '' : image2,
-                image3: image3 === window.location.href ? '' : image3
-            };
-            customers.push(newCustomer);
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(customers));
-            showAlert('บันทึกข้อมูลลูกค้าสำเร็จ!', 'success');
-        }
-
-        form.reset();
-        resetImagePreviews();
-        renderCustomers();
+    function showAlert(message, type = 'info') {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `p-3 rounded-md mb-4 text-white text-sm font-semibold ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
+        alertDiv.textContent = message;
+        alertContainer.appendChild(alertDiv);
+        setTimeout(() => alertDiv.remove(), 5000);
     }
-    
-    // Reset image previews
+
+    function showModal(title, message, onConfirm) {
+        modal.classList.remove('hidden');
+        modalTitle.textContent = title;
+        modalMessage.textContent = message;
+        modalConfirm.onclick = () => {
+            onConfirm();
+            modal.classList.add('hidden');
+        };
+    }
+    modalCancel.addEventListener('click', () => modal.classList.add('hidden'));
+
     function resetImagePreviews() {
         document.getElementById('image-display-1').src = '';
         document.getElementById('image-display-1').classList.add('hidden');
         document.getElementById('image-placeholder-1').classList.remove('hidden');
-
+        
         document.getElementById('image-display-2').src = '';
         document.getElementById('image-display-2').classList.add('hidden');
         document.getElementById('image-placeholder-2').classList.remove('hidden');
@@ -503,113 +543,101 @@
         document.getElementById('image-display-3').src = '';
         document.getElementById('image-display-3').classList.add('hidden');
         document.getElementById('image-placeholder-3').classList.remove('hidden');
-    }
-
-    // Load customer for editing
-    function loadCustomerForEdit(id) {
-        const customers = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY)) || [];
-        const customer = customers.find(c => c.id === id);
-        if (customer) {
-            document.getElementById('customer-name').value = customer.customerName;
-            document.getElementById('customer-address').value = customer.customerAddress;
-            document.getElementById('customer-phone').value = customer.customerPhone;
-            document.getElementById('google-maps').value = customer.googleMaps;
-            document.getElementById('inverter-model').value = customer.inverterModel;
-            document.getElementById('inverter-sn').value = customer.inverterSN;
-            document.getElementById('panel-model').value = customer.panelModel;
-            document.getElementById('panel-count').value = customer.panelCount;
-            document.getElementById('install-date').value = customer.installDate;
-            document.getElementById('service-interval').value = customer.serviceInterval;
-            
-            // Set image previews for editing
-            if (customer.image1) {
-                document.getElementById('image-display-1').src = customer.image1;
-                document.getElementById('image-display-1').classList.remove('hidden');
-                document.getElementById('image-placeholder-1').classList.add('hidden');
-            } else {
-                document.getElementById('image-display-1').classList.add('hidden');
-                document.getElementById('image-placeholder-1').classList.remove('hidden');
-            }
-            if (customer.image2) {
-                document.getElementById('image-display-2').src = customer.image2;
-                document.getElementById('image-display-2').classList.remove('hidden');
-                document.getElementById('image-placeholder-2').classList.add('hidden');
-            } else {
-                document.getElementById('image-display-2').classList.add('hidden');
-                document.getElementById('image-placeholder-2').classList.remove('hidden');
-            }
-            if (customer.image3) {
-                document.getElementById('image-display-3').src = customer.image3;
-                document.getElementById('image-display-3').classList.remove('hidden');
-                document.getElementById('image-placeholder-3').classList.add('hidden');
-            } else {
-                document.getElementById('image-display-3').classList.add('hidden');
-                document.getElementById('image-placeholder-3').classList.remove('hidden');
-            }
-
-            editMode = true;
-            currentEditId = id;
-            submitBtn.textContent = 'บันทึกการแก้ไข';
-        }
-    }
-
-    // Function to delete a customer
-    function deleteCustomer(id) {
-        let customers = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY)) || [];
-        customers = customers.filter(customer => customer.id !== id);
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(customers));
-        showAlert('ลบข้อมูลลูกค้าสำเร็จ!', 'success');
-        renderCustomers();
-    }
-
-    // Function to update last service date
-    function updateLastService(id) {
-        const today = mockDateInput.value || new Date().toISOString().slice(0, 10);
-        let customers = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY)) || [];
-        const customerToUpdate = customers.find(c => c.id === id);
-        if (customerToUpdate) {
-            customerToUpdate.lastServiceDate = today;
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(customers));
-            showAlert('อัปเดตสถานะบริการแล้ว!', 'success');
-            renderCustomers();
-        }
+    
+        document.getElementById('image-upload-1').value = '';
+        document.getElementById('image-upload-2').value = '';
+        document.getElementById('image-upload-3').value = '';
     }
     
-    // Initial load
-    window.onload = () => {
-        const storedLogo = localStorage.getItem(logoLocalStorageKey);
-        if (storedLogo) {
-            appLogo.src = storedLogo;
+    // Event listeners for image previews
+    document.getElementById('image-preview-1').addEventListener('click', () => { document.getElementById('image-upload-1').click(); });
+    document.getElementById('image-upload-1').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('image-display-1').src = e.target.result;
+                document.getElementById('image-display-1').classList.remove('hidden');
+                document.getElementById('image-placeholder-1').classList.add('hidden');
+            };
+            reader.readAsDataURL(file);
         }
-        
-        const today = new Date().toISOString().slice(0, 10);
-        mockDateInput.value = today;
-        currentDateDisplay.textContent = new Date().toLocaleDateString('th-TH');
-        
-        renderCustomers();
-    };
+    });
+
+    document.getElementById('image-preview-2').addEventListener('click', () => { document.getElementById('image-upload-2').click(); });
+    document.getElementById('image-upload-2').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('image-display-2').src = e.target.result;
+                document.getElementById('image-display-2').classList.remove('hidden');
+                document.getElementById('image-placeholder-2').classList.add('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+    
+    document.getElementById('image-preview-3').addEventListener('click', () => { document.getElementById('image-upload-3').click(); });
+    document.getElementById('image-upload-3').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('image-display-3').src = e.target.result;
+                document.getElementById('image-display-3').classList.remove('hidden');
+                document.getElementById('image-placeholder-3').classList.add('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+    });
 
     // Event listeners
     form.addEventListener('submit', saveCustomer);
+
     customersList.addEventListener('click', (e) => {
         const action = e.target.getAttribute('data-action');
         const id = e.target.getAttribute('data-id');
         if (action === 'delete') {
-            showModal('ยืนยันการลบข้อมูล', 'คุณต้องการลบข้อมูลลูกค้าคนนี้ใช่หรือไม่?', () => {
-                deleteCustomer(id);
-                // Close the modal after deletion
-                modal.classList.remove('flex');
-                modal.classList.add('hidden');
-            });
+            showModal('ยืนยันการลบข้อมูล', 'คุณต้องการลบข้อมูลลูกค้าคนนี้ใช่หรือไม่?', () => deleteCustomer(id));
         } else if (action === 'edit') {
-            loadCustomerForEdit(id);
+            const customer = allCustomersData.find(c => c.id === id);
+            if (customer) {
+                document.getElementById('customer-name').value = customer.customerName;
+                document.getElementById('customer-address').value = customer.customerAddress;
+                document.getElementById('customer-phone').value = customer.customerPhone;
+                document.getElementById('google-maps').value = customer.googleMaps;
+                document.getElementById('inverter-model').value = customer.inverterModel;
+                document.getElementById('inverter-sn').value = customer.inverterSN;
+                document.getElementById('panel-model').value = customer.panelModel;
+                document.getElementById('panel-count').value = customer.panelCount;
+                document.getElementById('install-date').value = customer.installDate;
+                document.getElementById('service-interval').value = customer.serviceInterval;
+                
+                resetImagePreviews();
+                if (customer.image1) {
+                    document.getElementById('image-display-1').src = customer.image1;
+                    document.getElementById('image-display-1').classList.remove('hidden');
+                    document.getElementById('image-placeholder-1').classList.add('hidden');
+                }
+                if (customer.image2) {
+                    document.getElementById('image-display-2').src = customer.image2;
+                    document.getElementById('image-display-2').classList.remove('hidden');
+                    document.getElementById('image-placeholder-2').classList.add('hidden');
+                }
+                if (customer.image3) {
+                    document.getElementById('image-display-3').src = customer.image3;
+                    document.getElementById('image-display-3').classList.remove('hidden');
+                    document.getElementById('image-placeholder-3').classList.add('hidden');
+                }
+
+                editMode = true;
+                currentEditId = id;
+                submitBtn.textContent = 'บันทึกการแก้ไข';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
         } else if (action === 'service') {
-            showModal('ยืนยันการบริการ', 'คุณยืนยันว่าได้เข้าบริการลูกค้าคนนี้แล้วใช่หรือไม่?', () => {
-                updateLastService(id);
-                // Close the modal after updating service
-                modal.classList.remove('flex');
-                modal.classList.add('hidden');
-            });
+            showModal('ยืนยันการบริการ', 'คุณยืนยันว่าได้เข้าบริการลูกค้าคนนี้แล้วใช่หรือไม่?', () => updateLastService(id));
         }
     });
 
@@ -619,16 +647,41 @@
     });
     
     showServiceBtn.addEventListener('click', () => {
-        renderCustomers('service');
+        const today = mockDateInput.value ? new Date(mockDateInput.value) : new Date();
+        const filteredCustomers = allCustomersData.filter(customer => {
+            if (!customer.lastServiceDate) return false;
+            const lastServiceDate = new Date(customer.lastServiceDate);
+            const serviceInterval = parseInt(customer.serviceInterval) || 0;
+            const nextServiceDate = new Date(lastServiceDate.getFullYear() + serviceInterval, lastServiceDate.getMonth(), lastServiceDate.getDate());
+            
+            const differenceInTime = nextServiceDate.getTime() - today.getTime();
+            const differenceInDays = differenceInTime / (1000 * 3600 * 24);
+            
+            return differenceInDays <= 30;
+        });
+        renderCustomersUI(filteredCustomers, 'service');
     });
 
     showAllBtn.addEventListener('click', () => {
-        renderCustomers('all');
+        renderCustomersUI(allCustomersData, 'all');
     });
     
     mockDateInput.addEventListener('change', () => {
-        renderCustomers();
+        const customers = allCustomersData;
+        renderCustomersUI(customers, 'all');
     });
+
+    // Handle logo upload
+    logoUploadInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            saveAppLogo(file);
+        }
+    });
+
+    // Display current date on load
+    currentDateDisplay.textContent = new Date().toLocaleDateString('th-TH');
+
 </script>
 
 </body>
