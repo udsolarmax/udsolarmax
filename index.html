@@ -590,11 +590,21 @@
         const action = e.target.getAttribute('data-action');
         const id = e.target.getAttribute('data-id');
         if (action === 'delete') {
-            showModal('ยืนยันการลบข้อมูล', 'คุณต้องการลบข้อมูลลูกค้าคนนี้ใช่หรือไม่?', () => deleteCustomer(id));
+            showModal('ยืนยันการลบข้อมูล', 'คุณต้องการลบข้อมูลลูกค้าคนนี้ใช่หรือไม่?', () => {
+                deleteCustomer(id);
+                // Close the modal after deletion
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+            });
         } else if (action === 'edit') {
             loadCustomerForEdit(id);
         } else if (action === 'service') {
-            showModal('ยืนยันการบริการ', 'คุณยืนยันว่าได้เข้าบริการลูกค้าคนนี้แล้วใช่หรือไม่?', () => updateLastService(id));
+            showModal('ยืนยันการบริการ', 'คุณยืนยันว่าได้เข้าบริการลูกค้าคนนี้แล้วใช่หรือไม่?', () => {
+                updateLastService(id);
+                // Close the modal after updating service
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+            });
         }
     });
 
