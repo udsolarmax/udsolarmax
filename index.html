@@ -865,28 +865,25 @@
 
             if (customer.ปีการรับประกัน > 0 && customer.วันที่ติดตั้ง) {
                 const installDate = new Date(customer.วันที่ติดตั้ง);
-                const lastServiceDate = customer.วันที่เซอร์วิสล่าสุด ? new Date(customer.วันที่เซอร์วิสล่าสุด) : installDate;
                 const warrantyEndDate = new Date(installDate);
                 warrantyEndDate.setFullYear(installDate.getFullYear() + customer.ปีการรับประกัน);
-
+                
+                const lastServiceDate = customer.วันที่เซอร์วิสล่าสุด ? new Date(customer.วันที่เซอร์วิสล่าสุด) : installDate;
                 const nextServiceAnniversary = new Date(lastServiceDate.getFullYear() + 1, lastServiceDate.getMonth(), lastServiceDate.getDate());
                 const oneMonthBefore = new Date(nextServiceAnniversary);
                 oneMonthBefore.setDate(nextServiceAnniversary.getDate() - 30);
 
-                // **ตรรกะการแสดงผลข้อความแจ้งเตือนที่แก้ไขใหม่**
-                // ขั้นตอนที่ 1: ตรวจสอบว่ามีการบันทึกเซอร์วิสครั้งสุดท้ายแล้ว และเกินวันหมดประกันหรือไม่
-                const hasFinalServiceBeenRecorded = customer.วันที่เซอร์วิสล่าสุด && new Date(customer.วันที่เซอร์วิสล่าสุด) > warrantyEndDate;
-
-                if (hasFinalServiceBeenRecorded) {
-                    // เงื่อนไขที่ 6: ถ้าการเซอร์วิสครั้งสุดท้ายได้ถูกบันทึกแล้วและเกินวันหมดประกัน
+                // **ตรรกะที่แก้ไขใหม่**
+                if (today > warrantyEndDate) {
+                    // เงื่อนไข: ถ้าวันปัจจุบันเลยวันหมดประกันมาแล้ว ให้แสดงคำเตือน "หมดประกัน" เสมอ
                     warningText = 'หมดระยะการรับประกันแล้ว';
                     isServiceDue = false;
                 } else if (today >= oneMonthBefore && today < nextServiceAnniversary) {
-                    // เงื่อนไขที่ 2: ถ้าใกล้ถึงวันครบรอบ
+                    // เงื่อนไข: ถ้ายังอยู่ในระยะรับประกันและใกล้ถึงวันครบรอบ
                     warningText = 'ใกล้ถึงเวลาครบรอบเซอวิสประจำปีแล้ว';
                     isServiceDue = true;
                 } else if (today >= nextServiceAnniversary) {
-                    // เงื่อนไขที่ 3 และ 5: ถ้าถึงวันครบรอบหรือเลยมาแล้ว
+                    // เงื่อนไข: ถ้ายังอยู่ในระยะรับประกันและเลยวันครบรอบมาแล้ว
                     warningText = 'ถึงเวลาครบรอบเซอวิสประจำปีแล้ว';
                     isServiceDue = true;
                 }
