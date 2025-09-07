@@ -840,26 +840,24 @@
                     let isServiceDue = false;
                     let warningText = '';
 
-                    // ใน function updateCustomerListWithAdminButtons(role)
-// ...
-// โค้ดส่วนอื่นๆ ที่เกี่ยวข้องกับการดึงข้อมูลและการแสดงผล
-
-if (customer.วันที่ติดตั้ง) {
+                    if (customer.วันที่ติดตั้ง) {
     const today = mockDate || new Date();
     const installDate = new Date(customer.วันที่ติดตั้ง);
-
-    // ใช้ วันที่เซอร์วิสล่าสุด ถ้ามี. ถ้าไม่มี ให้ใช้ วันที่ติดตั้ง
-    const lastServiceDate = customer.วันที่เซอร์วิสล่าสุด ? new Date(customer.วันที่เซอร์วิสล่าสุด) : installDate;
     
-    // กำหนดวันครบรอบเซอร์วิสที่ใกล้ที่สุดในอนาคต
-    let serviceYear = today.getFullYear();
-    const serviceDay = lastServiceDate.getDate();
-    const serviceMonth = lastServiceDate.getMonth();
-    let nextServiceDate = new Date(serviceYear, serviceMonth, serviceDay);
+    // เลือกวันที่ล่าสุดระหว่าง วันที่ติดตั้ง กับ วันที่เซอร์วิสล่าสุด
+    // เพื่อใช้เป็นจุดเริ่มต้นในการคำนวณ
+    const lastServiceDate = customer.วันที่เซอร์วิสล่าสุด ? new Date(customer.วันที่เซอร์วิสล่าสุด) : installDate;
 
-    // หากวันครบรอบในปีนี้ผ่านไปแล้ว ให้เลื่อนไปปีหน้า
-    if (nextServiceDate < today) {
-        nextServiceDate.setFullYear(serviceYear + 1);
+    // คำนวณวันครบรอบปีในอนาคตที่ใกล้ที่สุด
+    let serviceYear = lastServiceDate.getFullYear();
+    const serviceMonth = lastServiceDate.getMonth();
+    const serviceDay = lastServiceDate.getDate();
+
+    // บังคับให้วนลูปเพื่อหาปีที่วันครบรอบเกินวันปัจจุบัน
+    let nextServiceDate = new Date(serviceYear, serviceMonth, serviceDay);
+    while (nextServiceDate <= today) {
+        serviceYear++;
+        nextServiceDate.setFullYear(serviceYear);
     }
     
     // ตรวจสอบสถานะการรับประกัน
@@ -883,7 +881,6 @@ if (customer.วันที่ติดตั้ง) {
 if (isServiceDue && !warningText.includes('หมดระยะการรับประกัน')) {
     card.classList.add('blink');
 }
-
 // โค้ดส่วนที่เหลือ
                     
                     let buttonsHtml = '';
@@ -946,10 +943,13 @@ async function markAsServiced(docId) {
             const newServiceDate = (mockDate || new Date()).toISOString().substring(0, 10);
             
             await docRef.update({
-                วันที่เซอร์วิสล่าสุด: newServiceDate,
-                // ไม่ต้องอัปเดต วันที่ติดตั้ง
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            });
+        วันที่เซอร์วิสล่าสุด: newServiceDate,
+        // ไม่ต้องอัปเดต วันที่ติดตั้ง
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    // ...
+    // โค้ดส่วนอื่นๆ ที่ไม่เปลี่ยนแปลง
+}
             alert("อัปเดตสถานะเซอร์วิสสำเร็จแล้ว!");
         } catch (error) {
             console.error("เกิดข้อผิดพลาดในการอัปเดตสถานะเซอร์วิส: ", error);
