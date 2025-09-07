@@ -286,6 +286,27 @@
             display: none;
             margin-top: 10px;
         }
+        #search-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        #search-container input {
+            padding: 8px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            width: 60%;
+        }
+        #search-container button {
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-left: 10px;
+        }
     </style>
 </head>
 <body>
@@ -369,6 +390,11 @@
         </div>
 
         <h2>รายการข้อมูลลูกค้า</h2>
+
+        <div id="search-container">
+            <input type="text" id="search-input" placeholder="ค้นหาตามชื่อ-นามสกุล...">
+            <button onclick="searchCustomers()">ค้นหา</button>
+        </div>
 
         <div id="filter-buttons" style="display: none;">
             <button onclick="updateCustomerListWithAdminButtons(userRole, 'all')">ดูทั้งหมด</button>
@@ -570,18 +596,6 @@
                     console.error("เกิดข้อผิดพลาดในการลบ Logo:", error);
                     alert("เกิดข้อผิดพลาดในการลบ Logo: " + error.message);
                 }
-            }
-        }
-        
-        db.collection('settings').doc('company').onSnapshot(doc => {
-            const logoPreview = document.getElementById('logo-preview');
-            const data = doc.data();
-            if (data && data.logoUrl) {
-                logoPreview.src = data.logoUrl;
-                logoPreview.style.display = 'block';
-            } else {
-                logoPreview.src = '#';
-                logoPreview.style.display = 'none';
             }
         });
 
