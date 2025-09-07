@@ -355,6 +355,7 @@
         <div id="filter-buttons" style="display: none;">
             <button onclick="updateCustomerListWithAdminButtons(userRole, 'all')">ดูทั้งหมด</button>
             <button onclick="updateCustomerListWithAdminButtons(userRole, 'service_due')">ดูรายการที่ต้องเซอร์วิส</button>
+            <button onclick="updateCustomerListWithAdminButtons(userRole, 'warranty_expired')">หมดระยะการรับประกัน</button>
         </div>
 
         <div id="customer-list" class="data-list">
@@ -881,9 +882,10 @@
                         }
                     }
 
-                    // **ส่วนที่เพิ่มเข้ามาสำหรับการกรองข้อมูล**
+                    // **ส่วนที่แก้ไขเพิ่มเติมสำหรับการกรองข้อมูล**
                     const shouldDisplay = (filterType === 'all') || 
-                                          (filterType === 'service_due' && (warningText === 'ใกล้ถึงเวลาครบรอบเซอวิสประจำปีแล้ว' || warningText === 'ถึงเวลาครบรอบเซอวิสประจำปีแล้ว'));
+                                          (filterType === 'service_due' && (warningText === 'ใกล้ถึงเวลาครบรอบเซอวิสประจำปีแล้ว' || warningText === 'ถึงเวลาครบรอบเซอวิสประจำปีแล้ว')) ||
+                                          (filterType === 'warranty_expired' && warningText === 'หมดระยะการรับประกันแล้ว');
                     
                     if (shouldDisplay) {
                         const card = document.createElement('div');
