@@ -899,7 +899,7 @@
                             warningText = 'ถึงเวลาครบรอบเซอวิสประจำปีแล้ว';
                             isServiceDue = true;
                         }
-
+                        
                         // ตรวจสอบเงื่อนไขหมดประกันเป็นลำดับสุดท้าย โดยจะทำงานก็ต่อเมื่อไม่มีการแจ้งเตือนเรื่องเซอร์วิส
                         if (today > warrantyEndDate && !isServiceDue) {
                             warningText = 'หมดระยะการรับประกันแล้ว';
@@ -938,33 +938,27 @@
                         }
 
                         const detailsId = `details-${doc.id}`;
-                        const summaryHtml = `
-                            <p><strong>ชื่อ-นามสกุล:</strong> ${customer.ชื่อ || '-'}</p>
-                            <p><strong>เบอร์โทรศัพท์:</strong> ${customer.เบอร์โทร || '-'}</p>
-                            <p><strong>ที่อยู่:</strong> ${customer.ที่อยู่ || '-'}</p>
-                            ${warningText ? `<p class="warning-text">${warningText}</p>` : ''}
-                        `;
-                        const detailsHtml = `
-                            <div id="${detailsId}" class="card-details">
-                                <p><strong>วันที่ติดตั้ง:</strong> ${customer.วันที่ติดตั้ง || '-'}</p>
-                                <p><strong>ปีการรับประกัน:</strong> ${customer.ปีการรับประกัน || '-'}</p>
-                                <p><strong>วันที่เซอร์วิสล่าสุด:</strong> ${customer.วันที่เซอร์วิสล่าสุด || '-'}</p>
-                                <p><strong>อินเวอร์เตอร์รุ่น:</strong> ${customer.อินเวอร์เตอร์รุ่น || '-'}</p>
-                                <p><strong>หมายเลขซีเรียลอินเวอร์เตอร์:</strong> ${customer.หมายเลขซีเรียลอินเวอร์เตอร์ || '-'}</p>
-                                <p><strong>ยี่ห้อและรุ่นแผง:</strong> ${customer.ยี่ห้อรุ่นแผง || '-'}</p>
-                                <p><strong>จำนวนแผงที่ใช้:</strong> ${customer.จำนวนแผง || '-'}</p>
-                                <div class="customer-card-images">
-                                    ${customer.รูปภาพ1 ? `<img src="${customer.รูปภาพ1}" class="customer-card-image" alt="Image 1">` : ''}
-                                    ${customer.รูปภาพ2 ? `<img src="${customer.รูปภาพ2}" class="customer-card-image" alt="Image 2">` : ''}
-                                </div>
-                            </div>
-                        `;
                         
                         card.innerHTML = `
                             <div class="customer-card-info">
-                                ${summaryHtml}
+                                <p><strong>ชื่อ-นามสกุล:</strong> ${customer.ชื่อ || '-'}</p>
+                                <p><strong>เบอร์โทรศัพท์:</strong> ${customer.เบอร์โทร || '-'}</p>
+                                <p><strong>ที่อยู่:</strong> ${customer.ที่อยู่ || '-'}</p>
+                                ${warningText ? `<p class="warning-text">${warningText}</p>` : ''}
                                 <button class="card-details-button" onclick="toggleDetails('${detailsId}', this)">ดูรายละเอียด</button>
-                                ${detailsHtml}
+                                <div id="${detailsId}" class="card-details">
+                                    <p><strong>วันที่ติดตั้ง:</strong> ${customer.วันที่ติดตั้ง || '-'}</p>
+                                    <p><strong>ปีการรับประกัน:</strong> ${customer.ปีการรับประกัน || '-'}</p>
+                                    <p><strong>วันที่เซอร์วิสล่าสุด:</strong> ${customer.วันที่เซอร์วิสล่าสุด || '-'}</p>
+                                    <p><strong>อินเวอร์เตอร์รุ่น:</strong> ${customer.อินเวอร์เตอร์รุ่น || '-'}</p>
+                                    <p><strong>หมายเลขซีเรียลอินเวอร์เตอร์:</strong> ${customer.หมายเลขซีเรียลอินเวอร์เตอร์ || '-'}</p>
+                                    <p><strong>ยี่ห้อและรุ่นแผง:</strong> ${customer.ยี่ห้อรุ่นแผง || '-'}</p>
+                                    <p><strong>จำนวนแผงที่ใช้:</strong> ${customer.จำนวนแผง || '-'}</p>
+                                    <div class="customer-card-images">
+                                        ${customer.รูปภาพ1 ? `<img src="${customer.รูปภาพ1}" class="customer-card-image" alt="Image 1">` : ''}
+                                        ${customer.รูปภาพ2 ? `<img src="${customer.รูปภาพ2}" class="customer-card-image" alt="Image 2">` : ''}
+                                    </div>
+                                </div>
                             </div>
                             <div class="card-buttons">
                                 ${buttonsHtml}
@@ -973,10 +967,6 @@
                         customerList.appendChild(card);
                     }
                 });
-            }, (error) => {
-                console.error("เกิดข้อผิดพลาดในการดึงข้อมูล: ", error);
-                const customerList = document.getElementById("customer-list");
-                customerList.innerHTML = '<p class="error">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>';
             });
         }
         
