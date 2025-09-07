@@ -602,6 +602,18 @@
                     alert("เกิดข้อผิดพลาดในการลบ Logo: " + error.message);
                 }
             }
+        }
+        
+        db.collection('settings').doc('company').onSnapshot(doc => {
+            const logoPreview = document.getElementById('logo-preview');
+            const data = doc.data();
+            if (data && data.logoUrl) {
+                logoPreview.src = data.logoUrl;
+                logoPreview.style.display = 'block';
+            } else {
+                logoPreview.src = '#';
+                logoPreview.style.display = 'none';
+            }
         });
 
         function initMap() {
@@ -996,13 +1008,11 @@
                 if (searchTerm !== '' && foundCustomers.length === 1) {
                     const foundCustomer = foundCustomers[0];
                     if (foundCustomer.ละติจูด && foundCustomer.ลองจิจูด) {
-                        navigateTo(foundCustomer.ละติจูด, foundCustomer.ลองจิจูด);
+                        map.setCenter({lat: parseFloat(foundCustomer.ละติจูด), lng: parseFloat(foundCustomer.ลองจิจูด)});
+                        marker.setPosition({lat: parseFloat(foundCustomer.ละติจูด), lng: parseFloat(foundCustomer.ลองจิจูด)});
+                        map.setZoom(16);
                     }
                 }
-            }, (error) => {
-                console.error("เกิดข้อผิดพลาดในการดึงข้อมูล: ", error);
-                const customerList = document.getElementById("customer-list");
-                customerList.innerHTML = '<p class="error">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>';
             });
         }
         
@@ -1011,7 +1021,7 @@
             updateCustomerListWithAdminButtons(userRole, currentFilter, currentSearchTerm);
         }
 
-        function markAsServiced(docId) {
+        async function markAsServiced(docId) {
             if (!auth.currentUser || (userRole !== 'admin' && userRole !== 'editor')) {
                 alert("คุณไม่มีสิทธิ์อัปเดตสถานะเซอร์วิส");
                 return;
@@ -1022,7 +1032,7 @@
                     
                     const newServiceDate = (mockDate || new Date()).toISOString().substring(0, 10);
                     
-                    docRef.update({
+                    await docRef.update({
                         วันที่เซอร์วิสล่าสุด: newServiceDate,
                         timestamp: firebase.firestore.FieldValue.serverTimestamp()
                     });
