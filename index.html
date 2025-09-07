@@ -911,15 +911,17 @@
                         const nextServiceAnniversary = new Date(lastServiceDate.getFullYear() + 1, lastServiceDate.getMonth(), lastServiceDate.getDate());
                         const oneMonthBefore = new Date(nextServiceAnniversary);
                         oneMonthBefore.setDate(nextServiceAnniversary.getDate() - 30);
-                        
-                        if (today > warrantyEndDate) {
-                            warningText = 'หมดระยะการรับประกันแล้ว';
-                        } else if (today >= oneMonthBefore && today < nextServiceAnniversary) {
+
+                        if (today >= oneMonthBefore && today < nextServiceAnniversary) {
                             warningText = 'ใกล้ถึงเวลาครบรอบเซอวิสประจำปีแล้ว';
                             isServiceDue = true;
                         } else if (today >= nextServiceAnniversary) {
                             warningText = 'ถึงเวลาครบรอบเซอวิสประจำปีแล้ว';
                             isServiceDue = true;
+                        }
+
+                        if (today > warrantyEndDate && !isServiceDue) {
+                            warningText = 'หมดระยะการรับประกันแล้ว';
                         }
                     }
 
