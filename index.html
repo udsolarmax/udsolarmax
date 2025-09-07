@@ -676,7 +676,7 @@
         }
 
         async function uploadImage(file) {
-            if (!auth.currentUser) {
+            if (!auth.currentUser || (userRole !== 'admin' && userRole !== 'editor')) {
                 alert("คุณไม่มีสิทธิ์อัปโหลดรูปภาพ");
                 return null;
             }
@@ -689,7 +689,6 @@
             try {
                 await imageRef.put(file);
                 const downloadURL = await imageRef.getDownloadURL();
-                console.log("อัปโหลดรูปภาพสำเร็จ:", downloadURL);
                 return downloadURL;
             } catch (error) {
                 console.error("เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ:", error);
@@ -762,7 +761,6 @@
                 try {
                     await db.collection("Promtong").doc(docId).update(dataToSave);
                     alert("แก้ไขข้อมูลลูกค้าสำเร็จ!");
-                    console.log("แก้ไขข้อมูลสำเร็จ!");
                     resetForm();
                 } catch (error) {
                     console.error("เกิดข้อผิดพลาดในการแก้ไข: ", error);
@@ -772,7 +770,6 @@
                 try {
                     const docRef = await db.collection("Promtong").add(dataToSave);
                     alert("บันทึกข้อมูลลูกค้าสำเร็จ!");
-                    console.log("บันทึกข้อมูลสำเร็จ! Document ID: ", docRef.id);
                     resetForm();
                 } catch (error) {
                     console.error("เกิดข้อผิดพลาดในการบันทึก: ", error);
@@ -972,7 +969,7 @@
                                 <p><strong>ที่อยู่:</strong> ${customer.ที่อยู่ || '-'}</p>
                                 ${warningText ? `<p class="warning-text">${warningText}</p>` : ''}
                                 <button class="card-details-button" onclick="toggleDetails('${detailsId}', this)">ดูรายละเอียด</button>
-                                <div id="${detailsId}" class="card-details">
+                                <div id="${detailsId}" class="card-details" style="display:none;">
                                     <p><strong>วันที่ติดตั้ง:</strong> ${customer.วันที่ติดตั้ง || '-'}</p>
                                     <p><strong>ปีการรับประกัน:</strong> ${customer.ปีการรับประกัน || '-'}</p>
                                     <p><strong>วันที่เซอร์วิสล่าสุด:</strong> ${customer.วันที่เซอร์วิสล่าสุด || '-'}</p>
