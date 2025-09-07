@@ -846,12 +846,16 @@
     const installDay = installDate.getDate();
     const installYear = installDate.getFullYear();
 
-    // กำหนดปีที่จะเริ่มคำนวณวันเซอร์วิส
+    // กำหนดปีที่จะเริ่มคำนวณวันเซอร์วิส โดยเริ่มจากปีที่ติดตั้ง
     let serviceYear = installYear;
     
     // วนลูปเพื่อหาปีที่ถูกต้องสำหรับรอบการเซอร์วิสปัจจุบัน
-    // โดยจะบวกปีไปเรื่อยๆ จนกว่าวันที่เซอร์วิสจะอยู่ไม่เกินวันนี้
-    while (new Date(serviceYear, installMonth, installDay) < new Date(today.getFullYear(), installMonth, installDay)) {
+    while (new Date(serviceYear, installMonth, installDay) < installDate) {
+      serviceYear++;
+    }
+
+    // หากวันครบรอบยังไม่ถึงวันปัจจุบัน ให้ใช้ปีปัจจุบัน
+    while (new Date(serviceYear, installMonth, installDay) < today) {
         serviceYear++;
     }
 
@@ -870,6 +874,18 @@
         if (today >= oneMonthBefore && today <= nextServiceDate) {
             isServiceDue = true;
             warningText = 'ถึงเวลาครบรอบเซอวิสประจำปีแล้ว';
+        } else {
+            // กรณีที่เลยช่วงเวลาแจ้งเตือนมาแล้ว แต่ยังไม่ถึงรอบปีหน้า
+            // เพิ่มการตรวจสอบอีกครั้งเพื่อแสดงการแจ้งเตือน
+            const lastServiceDate = new Date(nextServiceDate);
+            lastServiceDate.setFullYear(serviceYear - 1);
+            const oneMonthBeforeLast = new Date(lastServiceDate);
+            oneMonthBeforeLast.setMonth(lastServiceDate.getMonth() - 1);
+
+            if (today >= oneMonthBeforeLast && today <= lastServiceDate) {
+                isServiceDue = true;
+                warningText = 'ถึงเวลาครบรอบเซอวิสประจำปีแล้ว';
+            }
         }
     }
 }
