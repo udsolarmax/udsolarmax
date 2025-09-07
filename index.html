@@ -268,7 +268,7 @@
         #filter-buttons button:hover {
             background-color: #155bb5;
         }
-        /* เพิ่ม CSS สำหรับส่วนย่อ-ขยาย Card */
+        /* CSS สำหรับส่วนย่อ-ขยาย Card */
         .card-details-button {
             background-color: #555;
             color: white;
@@ -281,6 +281,10 @@
         }
         .card-details-button:hover {
             background-color: #333;
+        }
+        .card-details {
+            display: none;
+            margin-top: 10px;
         }
     </style>
 </head>
@@ -943,6 +947,18 @@
                                 <p><strong>ยี่ห้อและรุ่นแผง:</strong> ${customer.ยี่ห้อรุ่นแผง || '-'}</p>
                                 <p><strong>จำนวนแผงที่ใช้:</strong> ${customer.จำนวนแผง || '-'}</p>
                                 ${warningText ? `<p class="warning-text">${warningText}</p>` : ''}
+                                <button class="card-details-button" onclick="toggleDetails('details-${doc.id}')">ดูรายละเอียด</button>
+                                <div id="details-${doc.id}" class="card-details">
+                                    <p><strong>วันที่ติดตั้ง:</strong> ${customer.วันที่ติดตั้ง || '-'}</p>
+                                    <p><strong>ปีการรับประกัน:</strong> ${customer.ปีการรับประกัน || '-'}</p>
+                                    <p><strong>วันที่เซอร์วิสล่าสุด:</strong> ${customer.วันที่เซอร์วิสล่าสุด || '-'}</p>
+                                    <p><strong>อินเวอร์เตอร์รุ่น:</strong> ${customer.อินเวอร์เตอร์รุ่น || '-'}</p>
+                                    <p><strong>หมายเลขซีเรียลอินเวอร์เตอร์:</strong> ${customer.หมายเลขซีเรียลอินเวอร์เตอร์ || '-'}</p>
+                                    <p><strong>ยี่ห้อและรุ่นแผง:</strong> ${customer.ยี่ห้อรุ่นแผง || '-'}</p>
+                                    <p><strong>จำนวนแผงที่ใช้:</strong> ${customer.จำนวนแผง || '-'}</p>
+                                    ${customer.รูปภาพ1 ? `<img src="${customer.รูปภาพ1}" class="customer-card-image" alt="Image 1">` : ''}
+                                    ${customer.รูปภาพ2 ? `<img src="${customer.รูปภาพ2}" class="customer-card-image" alt="Image 2">` : ''}
+                                </div>
                             </div>
                             <div class="card-buttons">
                                 ${buttonsHtml}
@@ -966,7 +982,6 @@
             if (confirm("คุณแน่ใจหรือไม่ว่าได้ทำการเซอร์วิสแล้ว?")) {
                 try {
                     const docRef = db.collection("Promtong").doc(docId);
-                    
                     const newServiceDate = (mockDate || new Date()).toISOString().substring(0, 10);
                     
                     await docRef.update({
@@ -979,6 +994,18 @@
                     console.error("เกิดข้อผิดพลาดในการอัปเดตสถานะเซอร์วิส: ", error);
                     alert("เกิดข้อผิดพลาดในการอัปเดตสถานะเซอร์วิส: " + error.message);
                 }
+            }
+        }
+
+        function toggleDetails(cardId) {
+            const detailsDiv = document.getElementById(cardId);
+            const button = detailsDiv.previousElementSibling;
+            if (detailsDiv.style.display === 'none') {
+                detailsDiv.style.display = 'block';
+                button.textContent = 'ซ่อนรายละเอียด';
+            } else {
+                detailsDiv.style.display = 'none';
+                button.textContent = 'ดูรายละเอียด';
             }
         }
     </script>
