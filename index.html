@@ -845,34 +845,36 @@
                 // เลือกวันที่ล่าสุดระหว่าง วันที่ติดตั้ง กับ วันที่เซอร์วิสล่าสุด
                 const lastServiceDate = customer.วันที่เซอร์วิสล่าสุด ? new Date(customer.วันที่เซอร์วิสล่าสุด) : installDate;
 
-                // คำนวณวันครบรอบปีสำหรับปีปัจจุบัน
-                let serviceAnniversaryDate = new Date(today.getFullYear(), lastServiceDate.getMonth(), lastServiceDate.getDate());
-
-                // ถ้าวันครบรอบสำหรับปีปัจจุบันผ่านมาแล้ว ให้คำนวณสำหรับปีถัดไป
-                if (serviceAnniversaryDate < today) {
-                    serviceAnniversaryDate.setFullYear(serviceAnniversaryDate.getFullYear() + 1);
-                }
+                // คำนวณวันครบรอบเซอร์วิสในรอบถัดไป
+                let nextServiceAnniversary = new Date(lastServiceDate.getFullYear() + 1, lastServiceDate.getMonth(), lastServiceDate.getDate());
                 
                 // คำนวณวันหมดระยะการรับประกัน
                 const warrantyEndDate = new Date(installDate);
                 warrantyEndDate.setFullYear(installDate.getFullYear() + customer.ปีการรับประกัน);
 
-                // กำหนดค่า isServiceDue จากการตรวจสอบช่วงเวลา 30 วันก่อนวันครบรอบ
-                const oneMonthBefore = new Date(serviceAnniversaryDate);
-                oneMonthBefore.setDate(serviceAnniversaryDate.getDate() - 30);
-                isServiceDue = (today >= oneMonthBefore && today <= serviceAnniversaryDate);
-
-                // นี่คือตรรกะใหม่ที่แก้ไขให้ทำงานตามลำดับที่คุณต้องการ
-                if (today <= warrantyEndDate && isServiceDue) {
-                    // ตรวจสอบขั้นแรก: ถ้ายังไม่หมดประกันและถึงรอบเซอร์วิส ให้แจ้งเตือนเซอร์วิส
-                    warningText = 'ถึงเวลาครบรอบเซอวิสประจำปีแล้ว';
+                // กำหนดช่วงเวลาการแจ้งเตือนล่วงหน้า 30 วัน
+                const oneMonthBefore = new Date(nextServiceAnniversary);
+                oneMonthBefore.setDate(nextServiceAnniversary.getDate() - 30);
+                
+                // ตรรกะใหม่: ตรวจสอบและกำหนดข้อความแจ้งเตือนตามลำดับ
+                if (today <= warrantyEndDate) { // ตรวจสอบว่ายังอยู่ในระยะรับประกัน
+                    if (today >= oneMonthBefore && today < nextServiceAnniversary) {
+                        // เงื่อนไข: ใกล้ถึงวันครบรอบ (30 วันก่อนวันครบรอบ)
+                        warningText = 'ใกล้ถึงเวลาครบรอบเซอวิสประจำปีแล้ว';
+                        isServiceDue = true;
+                    } else if (today >= nextServiceAnniversary) {
+                        // เงื่อนไข: ถึงวันครบรอบหรือเลยมาแล้ว
+                        warningText = 'ถึงเวลาครบรอบเซอวิสประจำปีแล้ว';
+                        isServiceDue = true;
+                    }
                 } else if (today > warrantyEndDate) {
-                    // ขั้นตอนที่สอง: ถ้าเลยวันหมดประกันมาแล้ว ให้แจ้งเตือนหมดประกัน
+                    // เงื่อนไข: หมดระยะการรับประกันแล้ว
                     warningText = 'หมดระยะการรับประกันแล้ว';
+                    isServiceDue = false; // ไม่ต้องแสดงปุ่มเซอร์วิส
                 }
             }
 
-            // กำหนดให้ card กระพริบถ้าถึงรอบเซอร์วิสและยังไม่หมดประกัน
+            // กำหนดให้ card กระพริบถ้าถึงรอบเซอร์วิส
             if (isServiceDue && !warningText.includes('หมดระยะการรับประกัน')) {
                 card.classList.add('blink');
             }
