@@ -862,10 +862,12 @@
                 oneMonthBefore.setDate(serviceAnniversaryDate.getDate() - 30);
                 isServiceDue = (today >= oneMonthBefore && today <= serviceAnniversaryDate);
 
-                // ลำดับการตรวจสอบและแสดงผลตามที่คุณต้องการ
-                if (isServiceDue) {
+                // นี่คือตรรกะใหม่ที่แก้ไขให้ทำงานตามลำดับที่คุณต้องการ
+                if (today <= warrantyEndDate && isServiceDue) {
+                    // ตรวจสอบขั้นแรก: ถ้ายังไม่หมดประกันและถึงรอบเซอร์วิส ให้แจ้งเตือนเซอร์วิส
                     warningText = 'ถึงเวลาครบรอบเซอวิสประจำปีแล้ว';
                 } else if (today > warrantyEndDate) {
+                    // ขั้นตอนที่สอง: ถ้าเลยวันหมดประกันมาแล้ว ให้แจ้งเตือนหมดประกัน
                     warningText = 'หมดระยะการรับประกันแล้ว';
                 }
             }
