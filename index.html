@@ -602,7 +602,7 @@
                     alert("เกิดข้อผิดพลาดในการลบ Logo: " + error.message);
                 }
             }
-        }
+        });
 
         function initMap() {
             const defaultLocation = { lat: 17.412198, lng: 102.781617 };
@@ -912,6 +912,7 @@
                         const oneMonthBefore = new Date(nextServiceAnniversary);
                         oneMonthBefore.setDate(nextServiceAnniversary.getDate() - 30);
                         
+                        // ตรรกะการแสดงผลข้อความแจ้งเตือนที่แก้ไขใหม่
                         if (today >= oneMonthBefore && today < nextServiceAnniversary) {
                             warningText = 'ใกล้ถึงเวลาครบรอบเซอวิสประจำปีแล้ว';
                             isServiceDue = true;
@@ -920,6 +921,7 @@
                             isServiceDue = true;
                         }
 
+                        // ตรวจสอบเงื่อนไขหมดประกันเป็นลำดับสุดท้าย โดยจะทำงานก็ต่อเมื่อไม่มีการแจ้งเตือนเรื่องเซอร์วิส
                         if (today > warrantyEndDate && !isServiceDue) {
                             warningText = 'หมดระยะการรับประกันแล้ว';
                         }
