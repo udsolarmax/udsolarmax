@@ -243,6 +243,15 @@
         .service-button:hover {
             background-color: #45a049 !important;
         }
+        #current-date-container {
+            text-align: right;
+            margin-bottom: 20px;
+        }
+        #mock-date-container {
+            display: none;
+            text-align: right;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -259,6 +268,14 @@
     <button id="logout-button" onclick="logout()">ออกจากระบบ</button>
 
     <div id="app-container" class="container" style="display:none;">
+        <div id="current-date-container">
+            <p id="current-date"></p>
+            <div id="mock-date-container">
+                <label for="mock-date-input">จำลองวันที่:</label>
+                <input type="date" id="mock-date-input" onchange="setMockDate(this.value)">
+                <button onclick="resetMockDate()">รีเซ็ต</button>
+            </div>
+        </div>
         <!-- เพิ่มส่วนสำหรับจัดการ Logo -->
         <div id="logo-container">
             <img id="logo-preview" src="#" alt="Company Logo" style="display:none;">
@@ -353,8 +370,27 @@
         let originalImages = { image1: null, image2: null };
         let map, marker;
         let userRole = null;
+        let today = new Date();
+        let mockDate = null;
         
-        // --- ส่วนของ Authentication ---
+        function updateDisplayDate() {
+            const displayDate = mockDate || today;
+            document.getElementById('current-date').textContent = 'วันที่ปัจจุบัน: ' + displayDate.toLocaleDateString('th-TH');
+        }
+
+        function setMockDate(dateString) {
+            mockDate = dateString ? new Date(dateString) : null;
+            updateDisplayDate();
+            updateCustomerListWithAdminButtons(userRole);
+        }
+
+        function resetMockDate() {
+            mockDate = null;
+            document.getElementById('mock-date-input').value = '';
+            updateDisplayDate();
+            updateCustomerListWithAdminButtons(userRole);
+        }
+
         auth.onAuthStateChanged(async user => {
             if (user) {
                 const rolesDoc = await db.collection('admin_roles').doc(user.email).get();
@@ -367,6 +403,14 @@
                 document.getElementById('login-form-container').style.display = 'none';
                 document.getElementById('app-container').style.display = 'block';
                 document.getElementById('logout-button').style.display = 'block';
+                
+                if(userRole === 'admin') {
+                    document.getElementById('mock-date-container').style.display = 'block';
+                } else {
+                    document.getElementById('mock-date-container').style.display = 'none';
+                }
+                
+                updateDisplayDate();
                 updateFormAndButtonsVisibility(userRole);
                 updateCustomerListWithAdminButtons(userRole);
                 initMap();
@@ -419,9 +463,7 @@
         function promptLogin() {
             alert("กรุณาเข้าสู่ระบบเพื่อแก้ไขหรือลบข้อมูล");
         }
-        // --- จบส่วนของ Authentication ---
         
-        // --- ส่วนของ Logo ---
         document.getElementById('logo-upload').addEventListener('change', async function(event) {
             if (!auth.currentUser || userRole !== 'admin') {
                 alert("คุณไม่มีสิทธิ์อัปโหลด Logo");
@@ -472,7 +514,6 @@
                 logoPreview.style.display = 'none';
             }
         });
-        // --- จบส่วนของ Logo ---
 
         function initMap() {
             const defaultLocation = { lat: 17.412198, lng: 102.781617 };
@@ -571,10 +612,6 @@
         async function saveCustomerData() {
             if (!auth.currentUser || (userRole !== 'admin' && userRole !== 'editor')) {
                 alert("คุณไม่มีสิทธิ์บันทึกข้อมูล");
-                return;
-            }
-            if (isEditing && userRole !== 'admin') {
-                alert("คุณไม่มีสิทธิ์แก้ไขข้อมูลลูกค้า");
                 return;
             }
 
@@ -802,12 +839,10 @@
                         buttonsHtml = `
                             <button class="edit-button" onclick="startEdit('${doc.id}', '${customer.ชื่อ || ''}', '${customer.เบอร์โทร || ''}', '${customer.ที่อยู่ || ''}', '${customer.วันที่ติดตั้ง || ''}', '${customer.ปีการรับประกัน || ''}', '${customer.อินเวอร์เตอร์รุ่น || ''}', '${customer.หมายเลขซีเรียลอินเวอร์เตอร์ || ''}', '${customer.ยี่ห้อรุ่นแผง || ''}', '${customer.จำนวนแผง || ''}', '${customer.ละติจูด || ''}', '${customer.ลองจิจูด || ''}', '${customer.รูปภาพ1 || ''}', '${customer.รูปภาพ2 || ''}')">แก้ไข</button>
                             <button class="delete-button" onclick="deleteCustomerData('${doc.id}')">ลบ</button>
-                            ${isServiceDue ? `<button class="service-button" onclick="markAsServiced('${doc.id}', '${customer.วันที่ติดตั้ง}')">เซอร์วิสแล้ว</button>` : ''}
+                            ${isServiceDue ? `<button class="service-button" onclick="markAsServiced('${doc.id}')">เซอร์วิสแล้ว</button>` : ''}
                         `;
                     } else if (role === 'editor') {
-                         buttonsHtml = `
-                            ${isServiceDue ? `<button class="service-button" onclick="markAsServiced('${doc.id}', '${customer.วันที่ติดตั้ง}')">เซอร์วิสแล้ว</button>` : ''}
-                         `;
+                         buttonsHtml = '';
                     } else {
                          buttonsHtml = '';
                     }
@@ -840,31 +875,6 @@
                 const customerList = document.getElementById("customer-list");
                 customerList.innerHTML = '<p class="error">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>';
             });
-        }
-
-        async function markAsServiced(docId, installDateString) {
-            if (!auth.currentUser || (userRole !== 'admin' && userRole !== 'editor')) {
-                alert("คุณไม่มีสิทธิ์อัปเดตสถานะเซอร์วิส");
-                return;
-            }
-            if (confirm("คุณแน่ใจหรือไม่ว่าได้ทำการเซอร์วิสแล้ว?")) {
-                try {
-                    const docRef = db.collection("Promtong").doc(docId);
-                    const doc = await docRef.get();
-                    const installDate = new Date(doc.data().วันที่ติดตั้ง);
-
-                    const newDate = new Date();
-                    
-                    await docRef.update({
-                        วันที่ติดตั้ง: newDate.toISOString().substring(0, 10),
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                    alert("อัปเดตสถานะเซอร์วิสสำเร็จแล้ว!");
-                } catch (error) {
-                    console.error("เกิดข้อผิดพลาดในการอัปเดตสถานะเซอร์วิส: ", error);
-                    alert("เกิดข้อผิดพลาดในการอัปเดตสถานะเซอร์วิส: " + error.message);
-                }
-            }
         }
     </script>
 </body>
