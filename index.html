@@ -872,13 +872,8 @@ if (customer.วันที่ติดตั้ง) {
         oneMonthBefore.setDate(serviceAnniversaryDate.getDate() - 30);
 
         if (today >= oneMonthBefore && today <= serviceAnniversaryDate) {
-            if (isServiceDue) {
-        warningText = 'ถึงเวลาครบรอบเซอวิสประจำปีแล้ว';
-    } 
-    // 2. ถ้ายังไม่ถึงรอบเซอร์วิส ให้ตรวจสอบว่าหมดระยะรับประกันหรือยัง
-    else if (today > warrantyEndDate) {
-        warningText = 'หมดระยะการรับประกันแล้ว';
-    }
+            isServiceDue = true;
+            warningText = 'ถึงเวลาครบรอบเซอวิสประจำปีแล้ว';
         }
     }
 }
