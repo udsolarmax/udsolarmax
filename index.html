@@ -911,16 +911,19 @@
                         const nextServiceAnniversary = new Date(lastServiceDate.getFullYear() + 1, lastServiceDate.getMonth(), lastServiceDate.getDate());
                         const oneMonthBefore = new Date(nextServiceAnniversary);
                         oneMonthBefore.setDate(nextServiceAnniversary.getDate() - 30);
-                        
-                        // ตรรกะการแสดงผลข้อความแจ้งเตือนที่แก้ไขใหม่
-                        if (today > warrantyEndDate && !isServiceDue) {
-                            warningText = 'หมดระยะการรับประกันแล้ว';
-                        } else if (today >= oneMonthBefore && today < nextServiceAnniversary) {
+
+                        // **ตรรกะการแสดงผลข้อความแจ้งเตือนที่แก้ไขใหม่**
+                        if (today >= oneMonthBefore && today < nextServiceAnniversary) {
                             warningText = 'ใกล้ถึงเวลาครบรอบเซอวิสประจำปีแล้ว';
                             isServiceDue = true;
                         } else if (today >= nextServiceAnniversary) {
                             warningText = 'ถึงเวลาครบรอบเซอวิสประจำปีแล้ว';
                             isServiceDue = true;
+                        }
+
+                        // ตรวจสอบเงื่อนไขหมดประกันเป็นลำดับสุดท้าย โดยจะทำงานก็ต่อเมื่อไม่มีการแจ้งเตือนเรื่องเซอร์วิส
+                        if (today > warrantyEndDate && !isServiceDue) {
+                            warningText = 'หมดระยะการรับประกันแล้ว';
                         }
                     }
 
@@ -935,7 +938,7 @@
 
                     if (shouldDisplay) {
                         foundCustomers.push(customer);
-
+                        
                         const card = document.createElement('div');
                         card.classList.add('customer-card');
                         
@@ -961,7 +964,7 @@
                         if (customer.ละติจูด && customer.ลองจิจูด) {
                             buttonsHtml += `<button class="map-button" onclick="navigateTo('${customer.ละติจูด}', '${customer.ลองจิจูด}')">ดูแผนที่</button>`;
                         }
-                        
+
                         const detailsId = `details-${doc.id}`;
                         
                         card.innerHTML = `
@@ -971,7 +974,7 @@
                                 <p><strong>ที่อยู่:</strong> ${customer.ที่อยู่ || '-'}</p>
                                 ${warningText ? `<p class="warning-text">${warningText}</p>` : ''}
                                 <button class="card-details-button" onclick="toggleDetails('${detailsId}', this)">ดูรายละเอียด</button>
-                                <div id="${detailsId}" class="card-details">
+                                <div id="${detailsId}" class="card-details" style="display:none;">
                                     <p><strong>วันที่ติดตั้ง:</strong> ${customer.วันที่ติดตั้ง || '-'}</p>
                                     <p><strong>ปีการรับประกัน:</strong> ${customer.ปีการรับประกัน || '-'}</p>
                                     <p><strong>วันที่เซอร์วิสล่าสุด:</strong> ${customer.วันที่เซอร์วิสล่าสุด || '-'}</p>
@@ -999,14 +1002,15 @@
                         navigateTo(foundCustomer.ละติจูด, foundCustomer.ลองจิจูด);
                     }
                 }
-            }, (error) => {
-                console.error("เกิดข้อผิดพลาดในการดึงข้อมูล: ", error);
-                const customerList = document.getElementById("customer-list");
-                customerList.innerHTML = '<p class="error">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>';
             });
         }
         
-        async function markAsServiced(docId) {
+        function executeSearch() {
+            currentSearchTerm = document.getElementById('search-input').value;
+            updateCustomerListWithAdminButtons(userRole, currentFilter, currentSearchTerm);
+        }
+
+        function markAsServiced(docId) {
             if (!auth.currentUser || (userRole !== 'admin' && userRole !== 'editor')) {
                 alert("คุณไม่มีสิทธิ์อัปเดตสถานะเซอร์วิส");
                 return;
@@ -1017,7 +1021,7 @@
                     
                     const newServiceDate = (mockDate || new Date()).toISOString().substring(0, 10);
                     
-                    await docRef.update({
+                    docRef.update({
                         วันที่เซอร์วิสล่าสุด: newServiceDate,
                         timestamp: firebase.firestore.FieldValue.serverTimestamp()
                     });
@@ -1029,7 +1033,7 @@
                 }
             }
         }
-        
+
         function toggleDetails(cardId, buttonElement) {
             const detailsDiv = document.getElementById(cardId);
             if (detailsDiv.style.display === 'none') {
