@@ -841,47 +841,42 @@
                     let warningText = '';
 
                     if (customer.วันที่ติดตั้ง) {
-                        const installDate = new Date(customer.วันที่ติดตั้ง);
-                        const installMonth = installDate.getMonth();
-                        const installDay = installDate.getDate();
-                        const installYear = installDate.getFullYear();
+    const installDate = new Date(customer.วันที่ติดตั้ง);
+    const installMonth = installDate.getMonth();
+    const installDay = installDate.getDate();
+    const installYear = installDate.getFullYear();
 
-                        // Check if the current date is after the warranty period
-                        const warrantyEndDate = new Date(installDate);
-                        warrantyEndDate.setFullYear(installYear + customer.ปีการรับประกัน);
+    // กำหนดปีที่จะเริ่มคำนวณวันเซอร์วิส
+    let serviceYear = installYear;
+    
+    // วนลูปเพื่อหาปีที่ถูกต้องสำหรับรอบการเซอร์วิสปัจจุบัน
+    // โดยจะบวกปีไปเรื่อยๆ จนกว่าวันที่เซอร์วิสจะอยู่ไม่เกินวันนี้
+    while (new Date(serviceYear, installMonth, installDay) < new Date(today.getFullYear(), installMonth, installDay)) {
+        serviceYear++;
+    }
 
-                        if (today > warrantyEndDate) {
-                            warningText = 'หมดระยะการรับประกันแล้ว';
-                        } else {
-                            // แก้ไขโค้ดส่วนนี้
-                            // กำหนดปีที่ต้องคำนวณวันเซอร์วิสใหม่ โดยเริ่มจากปีที่ติดตั้งเป็นหลัก
-                            let serviceYear = installYear;
-                            const nextServiceDate = new Date(serviceYear, installMonth, installDay);
+    const nextServiceDate = new Date(serviceYear, installMonth, installDay);
+    
+    // Check if the current date is after the warranty period
+    const warrantyEndDate = new Date(installDate);
+    warrantyEndDate.setFullYear(installYear + customer.ปีการรับประกัน);
 
-                            // ตรวจสอบว่าถ้าวันครบรอบในปีนี้ยังไม่ถึง ก็ไม่ต้องแจ้งเตือน
-                            if (today < nextServiceDate) {
-                                // ไม่ต้องทำอะไร
-                            } else {
-                                // ถ้าวันครบรอบปีนี้ผ่านไปแล้ว ให้คำนวณปีถัดไป
-                                while (nextServiceDate < today) {
-                                    serviceYear++;
-                                    nextServiceDate.setFullYear(serviceYear);
-                                }
-        
-                                const oneMonthBefore = new Date(nextServiceDate);
-                                oneMonthBefore.setMonth(nextServiceDate.getMonth() - 1);
-        
-                                if (today >= oneMonthBefore && today <= nextServiceDate) {
-                                    isServiceDue = true;
-                                    warningText = 'ถึงเวลาครบรอบเซอวิสประจำปีแล้ว';
-                                }
-                            }
-                        }
-                    }
+    if (today > warrantyEndDate) {
+        warningText = 'หมดระยะการรับประกันแล้ว';
+    } else {
+        const oneMonthBefore = new Date(nextServiceDate);
+        oneMonthBefore.setMonth(nextServiceDate.getMonth() - 1);
+    
+        if (today >= oneMonthBefore && today <= nextServiceDate) {
+            isServiceDue = true;
+            warningText = 'ถึงเวลาครบรอบเซอวิสประจำปีแล้ว';
+        }
+    }
+}
 
-                    if (isServiceDue && !warningText.includes('หมดระยะการรับประกัน')) {
-                        card.classList.add('blink');
-                    }
+if (isServiceDue && !warningText.includes('หมดระยะการรับประกัน')) {
+    card.classList.add('blink');
+}
                     
                     let buttonsHtml = '';
                     if (role === 'admin') {
