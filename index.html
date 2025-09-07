@@ -863,14 +863,18 @@
             let warningText = '';
             let isServiceDue = false;
 
-            if (customer.วันที่ติดตั้ง) {
-                // เพิ่มเงื่อนไขใหม่: ถ้าปีการรับประกันเป็น 0 ให้ข้ามการแสดงคำเตือนทั้งหมด
-                if (customer.ปีการรับประกัน > 0) {
-                    const installDate = new Date(customer.วันที่ติดตั้ง);
+            if (customer.ปีการรับประกัน > 0 && customer.วันที่ติดตั้ง) {
+                const installDate = new Date(customer.วันที่ติดตั้ง);
+                const warrantyEndDate = new Date(installDate);
+                warrantyEndDate.setFullYear(installDate.getFullYear() + customer.ปีการรับประกัน);
+
+                if (today > warrantyEndDate) {
+                    // เงื่อนไข 1: การรับประกันหมดอายุแล้ว
+                    warningText = 'หมดระยะการรับประกันแล้ว';
+                } else {
+                    // เงื่อนไข 2: การรับประกันยังไม่หมดอายุ, ตรวจสอบการครบรอบเซอร์วิส
                     const lastServiceDate = customer.วันที่เซอร์วิสล่าสุด ? new Date(customer.วันที่เซอร์วิสล่าสุด) : installDate;
                     const nextServiceAnniversary = new Date(lastServiceDate.getFullYear() + 1, lastServiceDate.getMonth(), lastServiceDate.getDate());
-                    const warrantyEndDate = new Date(installDate);
-                    warrantyEndDate.setFullYear(installDate.getFullYear() + customer.ปีการรับประกัน);
                     const oneMonthBefore = new Date(nextServiceAnniversary);
                     oneMonthBefore.setDate(nextServiceAnniversary.getDate() - 30);
                     
@@ -880,11 +884,6 @@
                     } else if (today >= nextServiceAnniversary) {
                         warningText = 'ถึงเวลาครบรอบเซอวิสประจำปีแล้ว';
                         isServiceDue = true;
-                    }
-
-                    if (customer.วันที่เซอร์วิสล่าสุด && new Date(customer.วันที่เซอร์วิสล่าสุด) > warrantyEndDate) {
-                        warningText = 'หมดระยะการรับประกันแล้ว';
-                        isServiceDue = false;
                     }
                 }
             }
@@ -896,22 +895,21 @@
             if (shouldDisplay) {
                 const card = document.createElement('div');
                 card.classList.add('customer-card');
-                let isServiceButtonDue = warningText.includes('ใกล้ถึงเวลา') || warningText.includes('ถึงเวลาครบรอบ');
                 
-                if (isServiceButtonDue && !warningText.includes('หมดระยะการรับประกัน')) {
+                if (isServiceDue) {
                     card.classList.add('blink');
                 }
-
+                
                 let buttonsHtml = '';
                 if (role === 'admin') {
                     buttonsHtml = `
                         <button class="edit-button" onclick="startEdit('${doc.id}', '${customer.ชื่อ || ''}', '${customer.เบอร์โทร || ''}', '${customer.ที่อยู่ || ''}', '${customer.วันที่ติดตั้ง || ''}', '${customer.ปีการรับประกัน || ''}', '${customer.อินเวอร์เตอร์รุ่น || ''}', '${customer.หมายเลขซีเรียลอินเวอร์เตอร์ || ''}', '${customer.ยี่ห้อรุ่นแผง || ''}', '${customer.จำนวนแผง || ''}', '${customer.ละติจูด || ''}', '${customer.ลองจิจูด || ''}', '${customer.รูปภาพ1 || ''}', '${customer.รูปภาพ2 || ''}')">แก้ไข</button>
                         <button class="delete-button" onclick="deleteCustomerData('${doc.id}')">ลบ</button>
-                        ${isServiceButtonDue ? `<button class="service-button" onclick="markAsServiced('${doc.id}')">เซอร์วิสแล้ว</button>` : ''}
+                        ${isServiceDue ? `<button class="service-button" onclick="markAsServiced('${doc.id}')">เซอร์วิสแล้ว</button>` : ''}
                     `;
                 } else if (role === 'editor') {
                     buttonsHtml = `
-                        ${isServiceButtonDue ? `<button class="service-button" onclick="markAsServiced('${doc.id}')">เซอร์วิสแล้ว</button>` : ''}
+                        ${isServiceDue ? `<button class="service-button" onclick="markAsServiced('${doc.id}')">เซอร์วิสแล้ว</button>` : ''}
                     `;
                 } else {
                     buttonsHtml = '';
