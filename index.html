@@ -282,7 +282,7 @@
             <input type="file" id="logo-upload" accept="image/*" style="display:none;">
             <div class="logo-buttons" id="logo-buttons" style="display:none;">
                 <button onclick="document.getElementById('logo-upload').click()">อัปโหลด Logo</button>
-                <button class="delete-logo-button" onclick="deleteLogo()">ลบ Logo</button>
+                <button class="delete-logo-button" onclick="deleteLogo()">ลบ Logo"></button>
             </div>
         </div>
         
@@ -444,7 +444,9 @@
             const formSection = document.getElementById('form-section');
             const logoButtons = document.getElementById('logo-buttons');
             const saveButton = document.getElementById('submit-button');
-
+            const mapInputs = document.querySelectorAll('#latitude, #longitude');
+            const mapButtons = document.querySelectorAll('.form-section button');
+            
             if (role === 'admin' || role === 'editor') {
                 formSection.style.display = 'flex';
                 saveButton.style.display = 'block';
@@ -455,15 +457,38 @@
 
             if (role === 'admin') {
                 logoButtons.style.display = 'flex';
-            } else {
+                mapInputs.forEach(input => input.disabled = false);
+                mapButtons.forEach(button => button.disabled = false);
+                document.getElementById('logo-upload').disabled = false;
+                document.querySelector('.delete-logo-button').disabled = false;
+            } else if (role === 'editor') {
+                 logoButtons.style.display = 'none';
+                 mapInputs.forEach(input => input.disabled = false);
+                 mapButtons.forEach(button => button.disabled = false);
+                 document.getElementById('logo-upload').disabled = true;
+                 document.querySelector('.delete-logo-button').disabled = true;
+            } else { // viewer
                 logoButtons.style.display = 'none';
+                mapInputs.forEach(input => input.disabled = true);
+                mapButtons.forEach(button => button.disabled = true);
+                document.getElementById('logo-upload').disabled = true;
+                document.querySelector('.delete-logo-button').disabled = true;
+            }
+
+            if (isEditing) {
+                if (role === 'editor') {
+                    // Editor can only add, not edit existing data
+                    formSection.style.display = 'none';
+                }
             }
         }
 
         function promptLogin() {
             alert("กรุณาเข้าสู่ระบบเพื่อแก้ไขหรือลบข้อมูล");
         }
+        // --- จบส่วนของ Authentication ---
         
+        // --- ส่วนของ Logo ---
         document.getElementById('logo-upload').addEventListener('change', async function(event) {
             if (!auth.currentUser || userRole !== 'admin') {
                 alert("คุณไม่มีสิทธิ์อัปโหลด Logo");
@@ -612,6 +637,10 @@
         async function saveCustomerData() {
             if (!auth.currentUser || (userRole !== 'admin' && userRole !== 'editor')) {
                 alert("คุณไม่มีสิทธิ์บันทึกข้อมูล");
+                return;
+            }
+            if (isEditing && userRole !== 'admin') {
+                alert("คุณไม่มีสิทธิ์แก้ไขข้อมูลลูกค้า");
                 return;
             }
 
@@ -815,22 +844,42 @@
                         const installDate = new Date(customer.วันที่ติดตั้ง);
                         const installMonth = installDate.getMonth();
                         const installDay = installDate.getDate();
+                        const installYear = installDate.getFullYear();
 
-                        const nextServiceDate = new Date(currentYear, installMonth, installDay);
-                        if (nextServiceDate < today) {
-                            nextServiceDate.setFullYear(currentYear + 1);
-                        }
-                        
-                        const oneMonthBefore = new Date(nextServiceDate);
-                        oneMonthBefore.setMonth(nextServiceDate.getMonth() - 1);
+                        // Check if the current date is after the warranty period
+                        const warrantyEndDate = new Date(installDate);
+                        warrantyEndDate.setFullYear(installYear + customer.ปีการรับประกัน);
 
-                        if (today >= oneMonthBefore && today <= nextServiceDate) {
-                            isServiceDue = true;
-                            warningText = 'ถึงเวลาครบรอบเซอวิสประจำปีแล้ว';
+                        if (today > warrantyEndDate) {
+                            warningText = 'หมดระยะการรับประกันแล้ว';
+                        } else {
+                            // แก้ไขโค้ดส่วนนี้
+                            // กำหนดปีที่ต้องคำนวณวันเซอร์วิสใหม่ โดยเริ่มจากปีที่ติดตั้งเป็นหลัก
+                            let serviceYear = installYear;
+                            const nextServiceDate = new Date(serviceYear, installMonth, installDay);
+
+                            // ตรวจสอบว่าถ้าวันครบรอบในปีนี้ยังไม่ถึง ก็ไม่ต้องแจ้งเตือน
+                            if (today < nextServiceDate) {
+                                // ไม่ต้องทำอะไร
+                            } else {
+                                // ถ้าวันครบรอบปีนี้ผ่านไปแล้ว ให้คำนวณปีถัดไป
+                                while (nextServiceDate < today) {
+                                    serviceYear++;
+                                    nextServiceDate.setFullYear(serviceYear);
+                                }
+        
+                                const oneMonthBefore = new Date(nextServiceDate);
+                                oneMonthBefore.setMonth(nextServiceDate.getMonth() - 1);
+        
+                                if (today >= oneMonthBefore && today <= nextServiceDate) {
+                                    isServiceDue = true;
+                                    warningText = 'ถึงเวลาครบรอบเซอวิสประจำปีแล้ว';
+                                }
+                            }
                         }
                     }
-                    
-                    if (isServiceDue) {
+
+                    if (isServiceDue && !warningText.includes('หมดระยะการรับประกัน')) {
                         card.classList.add('blink');
                     }
                     
@@ -842,7 +891,9 @@
                             ${isServiceDue ? `<button class="service-button" onclick="markAsServiced('${doc.id}')">เซอร์วิสแล้ว</button>` : ''}
                         `;
                     } else if (role === 'editor') {
-                         buttonsHtml = '';
+                         buttonsHtml = `
+                            ${isServiceDue ? `<button class="service-button" onclick="markAsServiced('${doc.id}')">เซอร์วิสแล้ว</button>` : ''}
+                         `;
                     } else {
                          buttonsHtml = '';
                     }
@@ -862,7 +913,7 @@
                             <p><strong>หมายเลขซีเรียลอินเวอร์เตอร์:</strong> ${customer.หมายเลขซีเรียลอินเวอร์เตอร์ || '-'}</p>
                             <p><strong>ยี่ห้อและรุ่นแผง:</strong> ${customer.ยี่ห้อรุ่นแผง || '-'}</p>
                             <p><strong>จำนวนแผงที่ใช้:</strong> ${customer.จำนวนแผง || '-'}</p>
-                            ${isServiceDue ? `<p class="warning-text">${warningText}</p>` : ''}
+                            ${warningText ? `<p class="warning-text">${warningText}</p>` : ''}
                         </div>
                         <div class="card-buttons">
                            ${buttonsHtml}
@@ -875,6 +926,29 @@
                 const customerList = document.getElementById("customer-list");
                 customerList.innerHTML = '<p class="error">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>';
             });
+        }
+
+        async function markAsServiced(docId) {
+            if (!auth.currentUser || (userRole !== 'admin' && userRole !== 'editor')) {
+                alert("คุณไม่มีสิทธิ์อัปเดตสถานะเซอร์วิส");
+                return;
+            }
+            if (confirm("คุณแน่ใจหรือไม่ว่าได้ทำการเซอร์วิสแล้ว?")) {
+                try {
+                    const docRef = db.collection("Promtong").doc(docId);
+                    
+                    const newDate = new Date();
+                    
+                    await docRef.update({
+                        วันที่ติดตั้ง: newDate.toISOString().substring(0, 10),
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    alert("อัปเดตสถานะเซอร์วิสสำเร็จแล้ว!");
+                } catch (error) {
+                    console.error("เกิดข้อผิดพลาดในการอัปเดตสถานะเซอร์วิส: ", error);
+                    alert("เกิดข้อผิดพลาดในการอัปเดตสถานะเซอร์วิส: " + error.message);
+                }
+            }
         }
     </script>
 </body>
