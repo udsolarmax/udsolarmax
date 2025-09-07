@@ -852,11 +852,11 @@ if (customer.วันที่ติดตั้ง) {
     // เพื่อใช้เป็นจุดเริ่มต้นในการคำนวณ
     const lastServiceDate = customer.วันที่เซอร์วิสล่าสุด ? new Date(customer.วันที่เซอร์วิสล่าสุด) : installDate;
 
-    // คำนวณวันครบรอบปีในอนาคตที่ใกล้ที่สุด
-    let serviceAnniversaryDate = new Date(lastServiceDate.getFullYear(), lastServiceDate.getMonth(), lastServiceDate.getDate());
-    
-    // ตรวจสอบว่าวันครบรอบยังไม่เกินวันปัจจุบัน
-    while (serviceAnniversaryDate <= today) {
+    // คำนวณวันครบรอบปีสำหรับปีปัจจุบัน
+    let serviceAnniversaryDate = new Date(today.getFullYear(), lastServiceDate.getMonth(), lastServiceDate.getDate());
+
+    // ถ้าวันครบรอบสำหรับปีปัจจุบันผ่านมาแล้ว ให้คำนวณสำหรับปีถัดไป
+    if (serviceAnniversaryDate < today) {
         serviceAnniversaryDate.setFullYear(serviceAnniversaryDate.getFullYear() + 1);
     }
     
@@ -867,9 +867,9 @@ if (customer.วันที่ติดตั้ง) {
     if (today > warrantyEndDate) {
         warningText = 'หมดระยะการรับประกันแล้ว';
     } else {
-        // กำหนดช่วงเวลาในการแจ้งเตือน: ตั้งแต่ 1 เดือนก่อนวันครบรอบ
+        // กำหนดช่วงเวลาในการแจ้งเตือน: 30 วันก่อนวันครบรอบ
         const oneMonthBefore = new Date(serviceAnniversaryDate);
-        oneMonthBefore.setMonth(serviceAnniversaryDate.getMonth() - 1);
+        oneMonthBefore.setDate(serviceAnniversaryDate.getDate() - 30);
 
         if (today >= oneMonthBefore && today <= serviceAnniversaryDate) {
             isServiceDue = true;
@@ -881,7 +881,6 @@ if (customer.วันที่ติดตั้ง) {
 if (isServiceDue && !warningText.includes('หมดระยะการรับประกัน')) {
     card.classList.add('blink');
 }
-
 // โค้ดส่วนที่เหลือ
                     
                     let buttonsHtml = '';
