@@ -602,7 +602,7 @@
                     alert("เกิดข้อผิดพลาดในการลบ Logo: " + error.message);
                 }
             }
-        });
+        }
 
         function initMap() {
             const defaultLocation = { lat: 17.412198, lng: 102.781617 };
@@ -911,7 +911,7 @@
                         const nextServiceAnniversary = new Date(lastServiceDate.getFullYear() + 1, lastServiceDate.getMonth(), lastServiceDate.getDate());
                         const oneMonthBefore = new Date(nextServiceAnniversary);
                         oneMonthBefore.setDate(nextServiceAnniversary.getDate() - 30);
-
+                        
                         if (today >= oneMonthBefore && today < nextServiceAnniversary) {
                             warningText = 'ใกล้ถึงเวลาครบรอบเซอวิสประจำปีแล้ว';
                             isServiceDue = true;
