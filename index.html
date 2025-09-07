@@ -269,7 +269,14 @@
             background-color: #155bb5;
         }
         /* CSS สำหรับส่วนย่อ-ขยาย Card */
-        .toggle-details-button {
+        .card-summary {
+            cursor: pointer;
+        }
+        .card-details {
+            display: none;
+            margin-top: 10px;
+        }
+        .card-details-button {
             background-color: #555;
             color: white;
             border: none;
@@ -279,7 +286,7 @@
             font-size: 14px;
             margin-top: 10px;
         }
-        .toggle-details-button:hover {
+        .card-details-button:hover {
             background-color: #333;
         }
     </style>
@@ -887,8 +894,10 @@
                         const oneMonthBefore = new Date(nextServiceAnniversary);
                         oneMonthBefore.setDate(nextServiceAnniversary.getDate() - 30);
                         
+                        // ตรรกะการแสดงผลข้อความแจ้งเตือนที่แก้ไขใหม่
                         if (today > warrantyEndDate) {
                             warningText = 'หมดระยะการรับประกันแล้ว';
+                            isServiceDue = false;
                         } else if (today >= oneMonthBefore && today < nextServiceAnniversary) {
                             warningText = 'ใกล้ถึงเวลาครบรอบเซอวิสประจำปีแล้ว';
                             isServiceDue = true;
