@@ -839,86 +839,84 @@
             let isServiceDue = false;
             let warningText = '';
 
-            if (customer.วันที่ติดตั้ง) {
-                const installDate = new Date(customer.วันที่ติดตั้ง);
-                
-                // เลือกวันที่ล่าสุดระหว่าง วันที่ติดตั้ง กับ วันที่เซอร์วิสล่าสุด
-                const lastServiceDate = customer.วันที่เซอร์วิสล่าสุด ? new Date(customer.วันที่เซอร์วิสล่าสุด) : installDate;
+            // ใน function updateCustomerListWithAdminButtons(role)
+// ...
+// โค้ดส่วนอื่นๆ ที่เกี่ยวข้องกับการดึงข้อมูลและการแสดงผล
 
-                // คำนวณวันครบรอบเซอร์วิสในรอบถัดไป
-                let nextServiceAnniversary = new Date(lastServiceDate.getFullYear() + 1, lastServiceDate.getMonth(), lastServiceDate.getDate());
-                
-                // คำนวณวันหมดระยะการรับประกัน
-                const warrantyEndDate = new Date(installDate);
-                warrantyEndDate.setFullYear(installDate.getFullYear() + customer.ปีการรับประกัน);
+if (customer.วันที่ติดตั้ง) {
+    const today = mockDate || new Date();
+    const installDate = new Date(customer.วันที่ติดตั้ง);
+    
+    // เลือกวันที่ล่าสุดระหว่าง วันที่ติดตั้ง กับ วันที่เซอร์วิสล่าสุด
+    const lastServiceDate = customer.วันที่เซอร์วิสล่าสุด ? new Date(customer.วันที่เซอร์วิสล่าสุด) : installDate;
 
-                // กำหนดช่วงเวลาการแจ้งเตือนล่วงหน้า 30 วัน
-                const oneMonthBefore = new Date(nextServiceAnniversary);
-                oneMonthBefore.setDate(nextServiceAnniversary.getDate() - 30);
-                
-                // ตรรกะใหม่: ตรวจสอบและกำหนดข้อความแจ้งเตือนตามลำดับ
-                if (today <= warrantyEndDate) { // ตรวจสอบว่ายังอยู่ในระยะรับประกัน
-                    if (today >= oneMonthBefore && today < nextServiceAnniversary) {
-                        // เงื่อนไข: ใกล้ถึงวันครบรอบ (30 วันก่อนวันครบรอบ)
-                        warningText = 'ใกล้ถึงเวลาครบรอบเซอวิสประจำปีแล้ว';
-                        isServiceDue = true;
-                    } else if (today >= nextServiceAnniversary) {
-                        // เงื่อนไข: ถึงวันครบรอบหรือเลยมาแล้ว
-                        warningText = 'ถึงเวลาครบรอบเซอวิสประจำปีแล้ว';
-                        isServiceDue = true;
-                    }
-                } else if (today > warrantyEndDate) {
-                    // เงื่อนไข: หมดระยะการรับประกันแล้ว
-                    warningText = 'หมดระยะการรับประกันแล้ว';
-                    isServiceDue = false; // ไม่ต้องแสดงปุ่มเซอร์วิส
-                }
-            }
+    // คำนวณวันครบรอบเซอร์วิสในรอบถัดไป
+    let nextServiceAnniversary = new Date(lastServiceDate.getFullYear() + 1, lastServiceDate.getMonth(), lastServiceDate.getDate());
+    
+    // คำนวณวันหมดระยะการรับประกัน
+    const warrantyEndDate = new Date(installDate);
+    warrantyEndDate.setFullYear(installDate.getFullYear() + customer.ปีการรับประกัน);
 
-            // กำหนดให้ card กระพริบถ้าถึงรอบเซอร์วิส
-            if (isServiceDue && !warningText.includes('หมดระยะการรับประกัน')) {
-                card.classList.add('blink');
-            }
-            
-            // สร้างปุ่มและส่วนแสดงผลตามปกติ
-            let buttonsHtml = '';
-            if (role === 'admin') {
-                buttonsHtml = `
-    <button class="edit-button" onclick="startEdit('${doc.id}', '${customer.ชื่อ || ''}', '${customer.เบอร์โทร || ''}', '${customer.ที่อยู่ || ''}', '${customer.วันที่ติดตั้ง || ''}', '${customer.ปีการรับประกัน || ''}', '${customer.อินเวอร์เตอร์รุ่น || ''}', '${customer.หมายเลขซีเรียลอินเวอร์เตอร์ || ''}', '${customer.ยี่ห้อรุ่นแผง || ''}', '${customer.จำนวนแผง || ''}', '${customer.ละติจูด || ''}', '${customer.ลองจิจูด || ''}', '${customer.รูปภาพ1 || ''}', '${customer.รูปภาพ2 || ''}')">แก้ไข</button>
-    <button class="delete-button" onclick="deleteCustomerData('${doc.id}')">ลบ</button>
-    ${isServiceDue ? `<button class="service-button" onclick="markAsServiced('${doc.id}')">เซอร์วิสแล้ว</button>` : ''}
-`;
-            } else if (role === 'editor') {
-                buttonsHtml = `
-                    ${isServiceDue ? `<button class="service-button" onclick="markAsServiced('${doc.id}')">เซอร์วิสแล้ว</button>` : ''}
-                `;
-            } else {
-                buttonsHtml = '';
-            }
+    // กำหนดช่วงเวลาการแจ้งเตือนล่วงหน้า 30 วัน
+    const oneMonthBefore = new Date(nextServiceAnniversary);
+    oneMonthBefore.setDate(nextServiceAnniversary.getDate() - 30);
 
-            if (customer.ละติจูด && customer.ลองจิจูด) {
-                buttonsHtml += `<button class="map-button" onclick="navigateTo('${customer.ละติจูด}', '${customer.ลองจิจูด}')">ดูแผนที่</button>`;
-            }
+    // ตรวจสอบว่าถึงรอบเซอร์วิสแล้วหรือไม่
+    const isServiceDue = (today >= oneMonthBefore && today < nextServiceAnniversary) || (today >= nextServiceAnniversary && today < warrantyEndDate);
 
-            card.innerHTML = `
-                <div class="customer-card-info">
-                    <p><strong>ชื่อ-นามสกุล:</strong> ${customer.ชื่อ || '-'}</p>
-                    <p><strong>เบอร์โทรศัพท์:</strong> ${customer.เบอร์โทร || '-'}</p>
-                    <p><strong>ที่อยู่:</strong> ${customer.ที่อยู่ || '-'}</p>
-                    <p><strong>วันที่ติดตั้ง:</strong> ${customer.วันที่ติดตั้ง || '-'}</p>
-                    <p><strong>ปีการรับประกัน:</strong> ${customer.ปีการรับประกัน || '-'}</p>
-                    <p><strong>วันที่เซอร์วิสล่าสุด:</strong> ${customer.วันที่เซอร์วิสล่าสุด || '-'}</p>
-                    <p><strong>อินเวอร์เตอร์รุ่น:</strong> ${customer.อินเวอร์เตอร์รุ่น || '-'}</p>
-                    <p><strong>หมายเลขซีเรียลอินเวอร์เตอร์:</strong> ${customer.หมายเลขซีเรียลอินเวอร์เตอร์ || '-'}</p>
-                    <p><strong>ยี่ห้อและรุ่นแผง:</strong> ${customer.ยี่ห้อรุ่นแผง || '-'}</p>
-                    <p><strong>จำนวนแผงที่ใช้:</strong> ${customer.จำนวนแผง || '-'}</p>
-                    ${warningText ? `<p class="warning-text">${warningText}</p>` : ''}
-                </div>
-                <div class="card-buttons">
-                    ${buttonsHtml}
-                </div>
-            `;
-            customerList.appendChild(card);
-        });
+    // กำหนดข้อความแจ้งเตือนตามลำดับความสำคัญ
+    let warningText = '';
+    if (isServiceDue) {
+        warningText = 'ถึงเวลาครบรอบเซอวิสประจำปีแล้ว';
+    } else if (today >= warrantyEndDate) {
+        warningText = 'หมดระยะการรับประกันแล้ว';
+    }
+    
+    // กำหนดให้ card กระพริบเฉพาะเมื่อถึงรอบเซอร์วิส
+    if (isServiceDue && !warningText.includes('หมดระยะการรับประกัน')) {
+        card.classList.add('blink');
+    }
+    
+    // สร้างปุ่มและส่วนแสดงผลตามปกติ
+    let buttonsHtml = '';
+    if (role === 'admin') {
+        buttonsHtml = `
+            <button class="edit-button" onclick="startEdit('${doc.id}', '${customer.ชื่อ || ''}', '${customer.เบอร์โทร || ''}', '${customer.ที่อยู่ || ''}', '${customer.วันที่ติดตั้ง || ''}', '${customer.ปีการรับประกัน || ''}', '${customer.อินเวอร์เตอร์รุ่น || ''}', '${customer.หมายเลขซีเรียลอินเวอร์เตอร์ || ''}', '${customer.ยี่ห้อรุ่นแผง || ''}', '${customer.จำนวนแผง || ''}', '${customer.ละติจูด || ''}', '${customer.ลองจิจูด || ''}', '${customer.รูปภาพ1 || ''}', '${customer.รูปภาพ2 || ''}')">แก้ไข</button>
+            <button class="delete-button" onclick="deleteCustomerData('${doc.id}')">ลบ</button>
+            ${isServiceDue ? `<button class="service-button" onclick="markAsServiced('${doc.id}')">เซอร์วิสแล้ว</button>` : ''}
+        `;
+    } else if (role === 'editor') {
+        buttonsHtml = `
+            ${isServiceDue ? `<button class="service-button" onclick="markAsServiced('${doc.id}')">เซอร์วิสแล้ว</button>` : ''}
+        `;
+    } else {
+        buttonsHtml = '';
+    }
+
+    if (customer.ละติจูด && customer.ลองจิจูด) {
+        buttonsHtml += `<button class="map-button" onclick="navigateTo('${customer.ละติจูด}', '${customer.ลองจิจูด}')">ดูแผนที่</button>`;
+    }
+
+    card.innerHTML = `
+        <div class="customer-card-info">
+            <p><strong>ชื่อ-นามสกุล:</strong> ${customer.ชื่อ || '-'}</p>
+            <p><strong>เบอร์โทรศัพท์:</strong> ${customer.เบอร์โทร || '-'}</p>
+            <p><strong>ที่อยู่:</strong> ${customer.ที่อยู่ || '-'}</p>
+            <p><strong>วันที่ติดตั้ง:</strong> ${customer.วันที่ติดตั้ง || '-'}</p>
+            <p><strong>ปีการรับประกัน:</strong> ${customer.ปีการรับประกัน || '-'}</p>
+            <p><strong>วันที่เซอร์วิสล่าสุด:</strong> ${customer.วันที่เซอร์วิสล่าสุด || '-'}</p>
+            <p><strong>อินเวอร์เตอร์รุ่น:</strong> ${customer.อินเวอร์เตอร์รุ่น || '-'}</p>
+            <p><strong>หมายเลขซีเรียลอินเวอร์เตอร์:</strong> ${customer.หมายเลขซีเรียลอินเวอร์เตอร์ || '-'}</p>
+            <p><strong>ยี่ห้อและรุ่นแผง:</strong> ${customer.ยี่ห้อรุ่นแผง || '-'}</p>
+            <p><strong>จำนวนแผงที่ใช้:</strong> ${customer.จำนวนแผง || '-'}</p>
+            ${warningText ? `<p class="warning-text">${warningText}</p>` : ''}
+        </div>
+        <div class="card-buttons">
+            ${buttonsHtml}
+        </div>
+    `;
+    customerList.appendChild(card);
+}
     }, (error) => {
         console.error("เกิดข้อผิดพลาดในการดึงข้อมูล: ", error);
         const customerList = document.getElementById("customer-list");
