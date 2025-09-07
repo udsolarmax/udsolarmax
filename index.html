@@ -911,8 +911,7 @@
                         const nextServiceAnniversary = new Date(lastServiceDate.getFullYear() + 1, lastServiceDate.getMonth(), lastServiceDate.getDate());
                         const oneMonthBefore = new Date(nextServiceAnniversary);
                         oneMonthBefore.setDate(nextServiceAnniversary.getDate() - 30);
-                        
-                        // ตรรกะการแสดงผลข้อความแจ้งเตือนที่แก้ไขใหม่
+
                         if (today >= oneMonthBefore && today < nextServiceAnniversary) {
                             warningText = 'ใกล้ถึงเวลาครบรอบเซอวิสประจำปีแล้ว';
                             isServiceDue = true;
@@ -921,7 +920,6 @@
                             isServiceDue = true;
                         }
 
-                        // ตรวจสอบเงื่อนไขหมดประกันเป็นลำดับสุดท้าย โดยจะทำงานก็ต่อเมื่อไม่มีการแจ้งเตือนเรื่องเซอร์วิส
                         if (today > warrantyEndDate && !isServiceDue) {
                             warningText = 'หมดระยะการรับประกันแล้ว';
                         }
@@ -929,7 +927,6 @@
 
                     const customerName = customer.ชื่อ || '';
                     const searchFilter = searchTerm === '' || customerName.toLowerCase().includes(searchTerm.toLowerCase());
-
                     const filterCondition = (filterType === 'all') || 
                                             (filterType === 'service_due' && (warningText === 'ใกล้ถึงเวลาครบรอบเซอวิสประจำปีแล้ว' || warningText === 'ถึงเวลาครบรอบเซอวิสประจำปีแล้ว')) ||
                                             (filterType === 'warranty_expired' && warningText === 'หมดระยะการรับประกันแล้ว');
@@ -1009,7 +1006,12 @@
             });
         }
         
-        async function markAsServiced(docId) {
+        function executeSearch() {
+            currentSearchTerm = document.getElementById('search-input').value;
+            updateCustomerListWithAdminButtons(userRole, currentFilter, currentSearchTerm);
+        }
+
+        function markAsServiced(docId) {
             if (!auth.currentUser || (userRole !== 'admin' && userRole !== 'editor')) {
                 alert("คุณไม่มีสิทธิ์อัปเดตสถานะเซอร์วิส");
                 return;
@@ -1020,7 +1022,7 @@
                     
                     const newServiceDate = (mockDate || new Date()).toISOString().substring(0, 10);
                     
-                    await docRef.update({
+                    docRef.update({
                         วันที่เซอร์วิสล่าสุด: newServiceDate,
                         timestamp: firebase.firestore.FieldValue.serverTimestamp()
                     });
@@ -1031,11 +1033,6 @@
                     alert("เกิดข้อผิดพลาดในการอัปเดตสถานะเซอร์วิส: " + error.message);
                 }
             }
-        }
-        
-        function executeSearch() {
-            currentSearchTerm = document.getElementById('search-input').value;
-            updateCustomerListWithAdminButtons(userRole, currentFilter, currentSearchTerm);
         }
 
         function toggleDetails(cardId, buttonElement) {
