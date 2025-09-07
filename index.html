@@ -390,7 +390,7 @@
         </div>
 
         <h2>รายการข้อมูลลูกค้า</h2>
-
+        
         <div id="search-container">
             <input type="text" id="search-input" placeholder="ค้นหาตามชื่อ-นามสกุล...">
             <button onclick="searchCustomers()">ค้นหา</button>
@@ -436,6 +436,8 @@
         let userRole = null;
         let today = new Date();
         let mockDate = null;
+        let currentFilter = 'all';
+        let currentSearchTerm = '';
         
         function updateDisplayDate() {
             const displayDate = mockDate || today;
@@ -445,14 +447,14 @@
         function setMockDate(dateString) {
             mockDate = dateString ? new Date(dateString) : null;
             updateDisplayDate();
-            updateCustomerListWithAdminButtons(userRole, 'all');
+            updateCustomerListWithAdminButtons(userRole, currentFilter, currentSearchTerm);
         }
 
         function resetMockDate() {
             mockDate = null;
             document.getElementById('mock-date-input').value = '';
             updateDisplayDate();
-            updateCustomerListWithAdminButtons(userRole, 'all');
+            updateCustomerListWithAdminButtons(userRole, currentFilter, currentSearchTerm);
         }
 
         auth.onAuthStateChanged(async user => {
@@ -476,13 +478,15 @@
 
                 if (userRole === 'admin' || userRole === 'editor') {
                     document.getElementById('filter-buttons').style.display = 'block';
+                    document.getElementById('search-container').style.display = 'block';
                 } else {
                     document.getElementById('filter-buttons').style.display = 'none';
+                    document.getElementById('search-container').style.display = 'none';
                 }
 
                 updateDisplayDate();
                 updateFormAndButtonsVisibility(userRole);
-                updateCustomerListWithAdminButtons(userRole, 'all');
+                updateCustomerListWithAdminButtons(userRole, currentFilter, currentSearchTerm);
                 initMap();
             } else {
                 userRole = null;
@@ -490,7 +494,8 @@
                 document.getElementById('app-container').style.display = 'none';
                 document.getElementById('logout-button').style.display = 'none';
                 document.getElementById('filter-buttons').style.display = 'none';
-                updateCustomerListWithAdminButtons('viewer', 'all');
+                document.getElementById('search-container').style.display = 'none';
+                updateCustomerListWithAdminButtons('viewer', 'all', '');
             }
         });
 
@@ -596,6 +601,18 @@
                     console.error("เกิดข้อผิดพลาดในการลบ Logo:", error);
                     alert("เกิดข้อผิดพลาดในการลบ Logo: " + error.message);
                 }
+            }
+        }
+        
+        db.collection('settings').doc('company').onSnapshot(doc => {
+            const logoPreview = document.getElementById('logo-preview');
+            const data = doc.data();
+            if (data && data.logoUrl) {
+                logoPreview.src = data.logoUrl;
+                logoPreview.style.display = 'block';
+            } else {
+                logoPreview.src = '#';
+                logoPreview.style.display = 'none';
             }
         });
 
