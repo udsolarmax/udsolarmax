@@ -865,29 +865,27 @@
 
             if (customer.ปีการรับประกัน > 0 && customer.วันที่ติดตั้ง) {
                 const installDate = new Date(customer.วันที่ติดตั้ง);
-                const lastServiceDate = customer.วันที่เซอร์วิสล่าสุด ? new Date(customer.วันที่เซอร์วิสล่าสุด) : installDate;
                 const warrantyEndDate = new Date(installDate);
                 warrantyEndDate.setFullYear(installDate.getFullYear() + customer.ปีการรับประกัน);
-
+                
+                const lastServiceDate = customer.วันที่เซอร์วิสล่าสุด ? new Date(customer.วันที่เซอร์วิสล่าสุด) : installDate;
                 const nextServiceAnniversary = new Date(lastServiceDate.getFullYear() + 1, lastServiceDate.getMonth(), lastServiceDate.getDate());
                 const oneMonthBefore = new Date(nextServiceAnniversary);
                 oneMonthBefore.setDate(nextServiceAnniversary.getDate() - 30);
 
-                // --- ตรรกะการแสดงผลข้อความแจ้งเตือนที่แก้ไขใหม่ ---
-                // ขั้นตอนที่ 1: ตรวจสอบเงื่อนไขการเซอร์วิสก่อนเป็นอันดับแรก
-                if (today >= oneMonthBefore && today < nextServiceAnniversary) {
+                // เริ่มต้นตรรกะใหม่ตามลำดับความสำคัญ
+                if (today > warrantyEndDate) {
+                    // เงื่อนไขหลัก: ถ้าเลยวันหมดประกันแล้ว ให้แสดงคำเตือน "หมดระยะการรับประกันแล้ว" เสมอ
+                    warningText = 'หมดระยะการรับประกันแล้ว';
+                    isServiceDue = false;
+                } else if (today >= oneMonthBefore && today < nextServiceAnniversary) {
+                    // เงื่อนไข: ถ้ายังอยู่ในระยะรับประกันและใกล้ถึงวันครบรอบ
                     warningText = 'ใกล้ถึงเวลาครบรอบเซอวิสประจำปีแล้ว';
                     isServiceDue = true;
                 } else if (today >= nextServiceAnniversary) {
+                    // เงื่อนไข: ถ้ายังอยู่ในระยะรับประกันและเลยวันครบรอบมาแล้ว
                     warningText = 'ถึงเวลาครบรอบเซอวิสประจำปีแล้ว';
                     isServiceDue = true;
-                }
-
-                // ขั้นตอนที่ 2: ตรวจสอบเงื่อนไขหมดประกันเป็นอันดับสุดท้าย เพื่อแทนที่คำเตือนเซอร์วิสหากถึงเงื่อนไขที่ 6
-                // เงื่อนไขที่ 6: หมดระยะการรับประกันแล้ว
-                if (today > warrantyEndDate && customer.วันที่เซอร์วิสล่าสุด && new Date(customer.วันที่เซอร์วิสล่าสุด) >= warrantyEndDate) {
-                    warningText = 'หมดระยะการรับประกันแล้ว';
-                    isServiceDue = false;
                 }
             }
 
