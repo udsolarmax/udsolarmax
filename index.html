@@ -847,19 +847,21 @@
 if (customer.วันที่ติดตั้ง) {
     const today = mockDate || new Date();
     const installDate = new Date(customer.วันที่ติดตั้ง);
-
-    // ใช้ วันที่เซอร์วิสล่าสุด ถ้ามี. ถ้าไม่มี ให้ใช้ วันที่ติดตั้ง
-    const lastServiceDate = customer.วันที่เซอร์วิสล่าสุด ? new Date(customer.วันที่เซอร์วิสล่าสุด) : installDate;
     
-    // กำหนดวันครบรอบเซอร์วิสที่ใกล้ที่สุดในอนาคต
-    let serviceYear = today.getFullYear();
-    const serviceDay = lastServiceDate.getDate();
-    const serviceMonth = lastServiceDate.getMonth();
-    let nextServiceDate = new Date(serviceYear, serviceMonth, serviceDay);
+    // เลือกวันที่ล่าสุดระหว่าง วันที่ติดตั้ง กับ วันที่เซอร์วิสล่าสุด
+    // เพื่อใช้เป็นจุดเริ่มต้นในการคำนวณ
+    const lastServiceDate = customer.วันที่เซอร์วิสล่าสุด ? new Date(customer.วันที่เซอร์วิสล่าสุด) : installDate;
 
-    // หากวันครบรอบในปีนี้ผ่านไปแล้ว ให้เลื่อนไปปีหน้า
-    if (nextServiceDate < today) {
-        nextServiceDate.setFullYear(serviceYear + 1);
+    // คำนวณวันครบรอบปีในอนาคตที่ใกล้ที่สุด
+    let serviceYear = lastServiceDate.getFullYear();
+    const serviceMonth = lastServiceDate.getMonth();
+    const serviceDay = lastServiceDate.getDate();
+
+    // บังคับให้วนลูปเพื่อหาปีที่วันครบรอบเกินวันปัจจุบัน
+    let nextServiceDate = new Date(serviceYear, serviceMonth, serviceDay);
+    while (nextServiceDate <= today) {
+        serviceYear++;
+        nextServiceDate.setFullYear(serviceYear);
     }
     
     // ตรวจสอบสถานะการรับประกัน
@@ -879,6 +881,11 @@ if (customer.วันที่ติดตั้ง) {
         }
     }
 }
+
+if (isServiceDue && !warningText.includes('หมดระยะการรับประกัน')) {
+    card.classList.add('blink');
+}
+
 
 if (isServiceDue && !warningText.includes('หมดระยะการรับประกัน')) {
     card.classList.add('blink');
