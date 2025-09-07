@@ -943,9 +943,7 @@
                             <p><strong>เบอร์โทรศัพท์:</strong> ${customer.เบอร์โทร || '-'}</p>
                             <p><strong>ที่อยู่:</strong> ${customer.ที่อยู่ || '-'}</p>
                             ${warningText ? `<p class="warning-text">${warningText}</p>` : ''}
-                            <button class="card-details-button" onclick="toggleDetails('${detailsId}', this)">ดูรายละเอียด</button>
                         `;
-
                         const detailsHtml = `
                             <div id="${detailsId}" class="card-details">
                                 <p><strong>วันที่ติดตั้ง:</strong> ${customer.วันที่ติดตั้ง || '-'}</p>
@@ -965,6 +963,7 @@
                         card.innerHTML = `
                             <div class="customer-card-info">
                                 ${summaryHtml}
+                                <button class="card-details-button" onclick="toggleDetails('${detailsId}', this)">ดูรายละเอียด</button>
                                 ${detailsHtml}
                             </div>
                             <div class="card-buttons">
