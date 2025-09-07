@@ -883,10 +883,10 @@
             let buttonsHtml = '';
             if (role === 'admin') {
                 buttonsHtml = `
-                    <button class="edit-button" onclick="startEdit('${doc.id}', '${customer.ชื่อ || ''}', '${customer.เบอร์โทร || ''}', '${customer.ที่อยู่ || ''}', '${customer.วันที่ติดตั้ง || ''}', '${customer.ปีการรับประกัน || ''}', '${customer.อินเวอร์เตอร์รุ่น || ''}', '${customer.หมายเลขซีเรียลอินเวอร์เตอร์ || ''}', '${customer.ยี่ห้อรุ่นแผง || ''}', '${customer.จำนวนแผง || ''}', '${customer.ละติจูด || ''}', '${customer.ลองจิจูด || ''}', '${customer.รูปภาพ1 || ''}', '${customer.รูปภาพ2 || ''}')">แก้ไข</button>
-                    <button class="delete-button" onclick="deleteCustomerData('${doc.id}')">ลบ</button>
-                    ${isServiceDue ? `<button class="service-button" onclick="markAsServiced('${doc.id}')">เซอร์วิสแล้ว</button>` : ''}
-                `;
+    <button class="edit-button" onclick="startEdit('${doc.id}', '${customer.ชื่อ || ''}', '${customer.เบอร์โทร || ''}', '${customer.ที่อยู่ || ''}', '${customer.วันที่ติดตั้ง || ''}', '${customer.ปีการรับประกัน || ''}', '${customer.อินเวอร์เตอร์รุ่น || ''}', '${customer.หมายเลขซีเรียลอินเวอร์เตอร์ || ''}', '${customer.ยี่ห้อรุ่นแผง || ''}', '${customer.จำนวนแผง || ''}', '${customer.ละติจูด || ''}', '${customer.ลองจิจูด || ''}', '${customer.รูปภาพ1 || ''}', '${customer.รูปภาพ2 || ''}')">แก้ไข</button>
+    <button class="delete-button" onclick="deleteCustomerData('${doc.id}')">ลบ</button>
+    ${isServiceDue ? `<button class="service-button" onclick="markAsServiced('${doc.id}')">เซอร์วิสแล้ว</button>` : ''}
+`;
             } else if (role === 'editor') {
                 buttonsHtml = `
                     ${isServiceDue ? `<button class="service-button" onclick="markAsServiced('${doc.id}')">เซอร์วิสแล้ว</button>` : ''}
@@ -925,29 +925,28 @@
         customerList.innerHTML = '<p class="error">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>';
     });
 }
-        async function markAsServiced(docId, installDateString) {
-            if (!auth.currentUser || (userRole !== 'admin' && userRole !== 'editor')) {
-                alert("คุณไม่มีสิทธิ์อัปเดตสถานะเซอร์วิส");
-                return;
-            }
-            if (confirm("คุณแน่ใจหรือไม่ว่าได้ทำการเซอร์วิสแล้ว?")) {
-                try {
-                    const docRef = db.collection("Promtong").doc(docId);
-                    const doc = await docRef.get();
-                    
-                    const newDate = new Date();
-                    
-                    await docRef.update({
-                        วันที่ติดตั้ง: newDate.toISOString().substring(0, 10),
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                    alert("อัปเดตสถานะเซอร์วิสสำเร็จแล้ว!");
-                } catch (error) {
-                    console.error("เกิดข้อผิดพลาดในการอัปเดตสถานะเซอร์วิส: ", error);
-                    alert("เกิดข้อผิดพลาดในการอัปเดตสถานะเซอร์วิส: " + error.message);
-                }
-            }
+        async function markAsServiced(docId) {
+    if (!auth.currentUser || (userRole !== 'admin' && userRole !== 'editor')) {
+        alert("คุณไม่มีสิทธิ์อัปเดตสถานะเซอร์วิส");
+        return;
+    }
+    if (confirm("คุณแน่ใจหรือไม่ว่าได้ทำการเซอร์วิสแล้ว?")) {
+        try {
+            const docRef = db.collection("Promtong").doc(docId);
+            const newServiceDate = (mockDate || new Date()).toISOString().substring(0, 10);
+
+            await docRef.update({
+                วันที่เซอร์วิสล่าสุด: newServiceDate,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            alert("อัปเดตสถานะเซอร์วิสสำเร็จแล้ว!");
+        } catch (error) {
+            console.error("เกิดข้อผิดพลาดในการอัปเดตสถานะเซอร์วิส: ", error);
+            alert("เกิดข้อผิดพลาดในการอัปเดตสถานะเซอร์วิส: " + error.message);
         }
+    }
+}
     </script>
 </body>
 </html>
