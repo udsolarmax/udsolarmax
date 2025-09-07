@@ -840,16 +840,16 @@
                     let isServiceDue = false;
                     let warningText = '';
 
-                    // ใน function updateCustomerListWithAdminButtons(role)
+// ใน function updateCustomerListWithAdminButtons(role)
 // ...
-// โค้ดส่วนอื่นๆ ที่เกี่ยวข้องกับการดึงข้อมูลและการแสดงผล
+// โค้ดส่วนอื่นๆ ที่เกี่ยวข้องกับการดึงข้อมูลและการแสดงผล (เหมือนเดิม)
+// ...
 
 if (customer.วันที่ติดตั้ง) {
     const today = mockDate || new Date();
     const installDate = new Date(customer.วันที่ติดตั้ง);
     
     // เลือกวันที่ล่าสุดระหว่าง วันที่ติดตั้ง กับ วันที่เซอร์วิสล่าสุด
-    // เพื่อใช้เป็นจุดเริ่มต้นในการคำนวณ
     const lastServiceDate = customer.วันที่เซอร์วิสล่าสุด ? new Date(customer.วันที่เซอร์วิสล่าสุด) : installDate;
 
     // คำนวณวันครบรอบปีสำหรับปีปัจจุบัน
@@ -864,17 +864,17 @@ if (customer.วันที่ติดตั้ง) {
     const warrantyEndDate = new Date(installDate);
     warrantyEndDate.setFullYear(installDate.getFullYear() + customer.ปีการรับประกัน);
 
-    if (today > warrantyEndDate) {
+    // กำหนดค่า isServiceDue จากการตรวจสอบช่วงเวลา
+    const oneMonthBefore = new Date(serviceAnniversaryDate);
+    oneMonthBefore.setDate(serviceAnniversaryDate.getDate() - 30);
+    isServiceDue = (today >= oneMonthBefore && today <= serviceAnniversaryDate);
+    
+    // นี่คือส่วนที่แก้ไขและวางในตำแหน่งที่ถูกต้อง
+    warningText = ''; // รีเซ็ตข้อความเตือนก่อน
+    if (isServiceDue) {
+        warningText = 'ถึงเวลาครบรอบเซอวิสประจำปีแล้ว';
+    } else if (today > warrantyEndDate) {
         warningText = 'หมดระยะการรับประกันแล้ว';
-    } else {
-        // กำหนดช่วงเวลาในการแจ้งเตือน: 30 วันก่อนวันครบรอบ
-        const oneMonthBefore = new Date(serviceAnniversaryDate);
-        oneMonthBefore.setDate(serviceAnniversaryDate.getDate() - 30);
-
-        if (today >= oneMonthBefore && today <= serviceAnniversaryDate) {
-            isServiceDue = true;
-            warningText = 'ถึงเวลาครบรอบเซอวิสประจำปีแล้ว';
-        }
     }
 }
 
