@@ -393,13 +393,13 @@
         
         <div id="search-container">
             <input type="text" id="search-input" placeholder="ค้นหาตามชื่อ-นามสกุล...">
-            <button onclick="searchCustomers()">ค้นหา</button>
+            <button onclick="executeSearch()">ค้นหา</button>
         </div>
 
         <div id="filter-buttons" style="display: none;">
-            <button onclick="updateCustomerListWithAdminButtons(userRole, 'all')">ดูทั้งหมด</button>
-            <button onclick="updateCustomerListWithAdminButtons(userRole, 'service_due')">ดูรายการที่ต้องเซอร์วิส</button>
-            <button onclick="updateCustomerListWithAdminButtons(userRole, 'warranty_expired')">หมดระยะการรับประกัน</button>
+            <button onclick="updateCustomerListWithAdminButtons(userRole, 'all', currentSearchTerm)">ดูทั้งหมด</button>
+            <button onclick="updateCustomerListWithAdminButtons(userRole, 'service_due', currentSearchTerm)">ดูรายการที่ต้องเซอร์วิส</button>
+            <button onclick="updateCustomerListWithAdminButtons(userRole, 'warranty_expired', currentSearchTerm)">หมดระยะการรับประกัน</button>
         </div>
 
         <div id="customer-list" class="data-list">
@@ -601,18 +601,6 @@
                     console.error("เกิดข้อผิดพลาดในการลบ Logo:", error);
                     alert("เกิดข้อผิดพลาดในการลบ Logo: " + error.message);
                 }
-            }
-        }
-        
-        db.collection('settings').doc('company').onSnapshot(doc => {
-            const logoPreview = document.getElementById('logo-preview');
-            const data = doc.data();
-            if (data && data.logoUrl) {
-                logoPreview.src = data.logoUrl;
-                logoPreview.style.display = 'block';
-            } else {
-                logoPreview.src = '#';
-                logoPreview.style.display = 'none';
             }
         });
 
@@ -895,7 +883,7 @@
             window.open(url, '_blank');
         }
         
-        function updateCustomerListWithAdminButtons(role, filterType = 'all') {
+        function updateCustomerListWithAdminButtons(role, filterType = 'all', searchTerm = '') {
             db.collection("Promtong").orderBy("วันที่ติดตั้ง", "asc").onSnapshot((querySnapshot) => {
                 const customerList = document.getElementById("customer-list");
                 customerList.innerHTML = '';
@@ -906,6 +894,8 @@
                 }
 
                 const today = mockDate || new Date();
+
+                let foundCustomers = [];
 
                 querySnapshot.forEach((doc) => {
                     const customer = doc.data();
@@ -923,25 +913,29 @@
                         oneMonthBefore.setDate(nextServiceAnniversary.getDate() - 30);
                         
                         // ตรรกะการแสดงผลข้อความแจ้งเตือนที่แก้ไขใหม่
-                        if (today >= oneMonthBefore && today < nextServiceAnniversary) {
+                        if (today > warrantyEndDate && !isServiceDue) {
+                            warningText = 'หมดระยะการรับประกันแล้ว';
+                        } else if (today >= oneMonthBefore && today < nextServiceAnniversary) {
                             warningText = 'ใกล้ถึงเวลาครบรอบเซอวิสประจำปีแล้ว';
                             isServiceDue = true;
                         } else if (today >= nextServiceAnniversary) {
                             warningText = 'ถึงเวลาครบรอบเซอวิสประจำปีแล้ว';
                             isServiceDue = true;
                         }
-
-                        // ตรวจสอบเงื่อนไขหมดประกันเป็นลำดับสุดท้าย โดยจะทำงานก็ต่อเมื่อไม่มีการแจ้งเตือนเรื่องเซอร์วิส
-                        if (today > warrantyEndDate && !isServiceDue) {
-                            warningText = 'หมดระยะการรับประกันแล้ว';
-                        }
                     }
 
-                    const shouldDisplay = (filterType === 'all') || 
-                                          (filterType === 'service_due' && (warningText === 'ใกล้ถึงเวลาครบรอบเซอวิสประจำปีแล้ว' || warningText === 'ถึงเวลาครบรอบเซอวิสประจำปีแล้ว')) ||
-                                          (filterType === 'warranty_expired' && warningText === 'หมดระยะการรับประกันแล้ว');
+                    const customerName = customer.ชื่อ || '';
+                    const searchFilter = searchTerm === '' || customerName.toLowerCase().includes(searchTerm.toLowerCase());
+
+                    const filterCondition = (filterType === 'all') || 
+                                            (filterType === 'service_due' && (warningText === 'ใกล้ถึงเวลาครบรอบเซอวิสประจำปีแล้ว' || warningText === 'ถึงเวลาครบรอบเซอวิสประจำปีแล้ว')) ||
+                                            (filterType === 'warranty_expired' && warningText === 'หมดระยะการรับประกันแล้ว');
                     
+                    const shouldDisplay = searchFilter && filterCondition;
+
                     if (shouldDisplay) {
+                        foundCustomers.push(customer);
+
                         const card = document.createElement('div');
                         card.classList.add('customer-card');
                         
@@ -967,7 +961,7 @@
                         if (customer.ละติจูด && customer.ลองจิจูด) {
                             buttonsHtml += `<button class="map-button" onclick="navigateTo('${customer.ละติจูด}', '${customer.ลองจิจูด}')">ดูแผนที่</button>`;
                         }
-
+                        
                         const detailsId = `details-${doc.id}`;
                         
                         card.innerHTML = `
@@ -998,6 +992,17 @@
                         customerList.appendChild(card);
                     }
                 });
+
+                if (searchTerm !== '' && foundCustomers.length === 1) {
+                    const foundCustomer = foundCustomers[0];
+                    if (foundCustomer.ละติจูด && foundCustomer.ลองจิจูด) {
+                        navigateTo(foundCustomer.ละติจูด, foundCustomer.ลองจิจูด);
+                    }
+                }
+            }, (error) => {
+                console.error("เกิดข้อผิดพลาดในการดึงข้อมูล: ", error);
+                const customerList = document.getElementById("customer-list");
+                customerList.innerHTML = '<p class="error">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>';
             });
         }
         
@@ -1024,7 +1029,7 @@
                 }
             }
         }
-
+        
         function toggleDetails(cardId, buttonElement) {
             const detailsDiv = document.getElementById(cardId);
             if (detailsDiv.style.display === 'none') {
