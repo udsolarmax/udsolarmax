@@ -982,6 +982,7 @@
             if (confirm("คุณแน่ใจหรือไม่ว่าได้ทำการเซอร์วิสแล้ว?")) {
                 try {
                     const docRef = db.collection("Promtong").doc(docId);
+                    
                     const newServiceDate = (mockDate || new Date()).toISOString().substring(0, 10);
                     
                     await docRef.update({
@@ -997,15 +998,14 @@
             }
         }
 
-        function toggleDetails(cardId) {
+        function toggleDetails(cardId, buttonElement) {
             const detailsDiv = document.getElementById(cardId);
-            const button = detailsDiv.previousElementSibling;
             if (detailsDiv.style.display === 'none') {
                 detailsDiv.style.display = 'block';
-                button.textContent = 'ซ่อนรายละเอียด';
+                buttonElement.textContent = 'ซ่อนรายละเอียด';
             } else {
                 detailsDiv.style.display = 'none';
-                button.textContent = 'ดูรายละเอียด';
+                buttonElement.textContent = 'ดูรายละเอียด';
             }
         }
     </script>
