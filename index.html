@@ -911,7 +911,8 @@
                         const nextServiceAnniversary = new Date(lastServiceDate.getFullYear() + 1, lastServiceDate.getMonth(), lastServiceDate.getDate());
                         const oneMonthBefore = new Date(nextServiceAnniversary);
                         oneMonthBefore.setDate(nextServiceAnniversary.getDate() - 30);
-
+                        
+                        // ตรรกะการแสดงผลข้อความแจ้งเตือนที่แก้ไขใหม่
                         if (today >= oneMonthBefore && today < nextServiceAnniversary) {
                             warningText = 'ใกล้ถึงเวลาครบรอบเซอวิสประจำปีแล้ว';
                             isServiceDue = true;
@@ -971,7 +972,7 @@
                                 <p><strong>ที่อยู่:</strong> ${customer.ที่อยู่ || '-'}</p>
                                 ${warningText ? `<p class="warning-text">${warningText}</p>` : ''}
                                 <button class="card-details-button" onclick="toggleDetails('${detailsId}', this)">ดูรายละเอียด</button>
-                                <div id="${detailsId}" class="card-details" style="display:none;">
+                                <div id="${detailsId}" class="card-details">
                                     <p><strong>วันที่ติดตั้ง:</strong> ${customer.วันที่ติดตั้ง || '-'}</p>
                                     <p><strong>ปีการรับประกัน:</strong> ${customer.ปีการรับประกัน || '-'}</p>
                                     <p><strong>วันที่เซอร์วิสล่าสุด:</strong> ${customer.วันที่เซอร์วิสล่าสุด || '-'}</p>
