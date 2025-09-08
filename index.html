@@ -332,6 +332,8 @@
 
     <div id="app-container" class="container" style="display:none;">
       
+        <button onclick="window.location.reload()" style="position: absolute; top: 20px; left: 20px; z-index: 1000; padding: 10px; font-size: 14px; background-color: #f0f0f0; border: 1px solid #ccc; border-radius: 5px;">รีเฟรช</button>
+
         <div id="current-date-container">
             <p id="current-date"></p>
             <div id="mock-date-container">
@@ -970,16 +972,13 @@ none;">
                         let buttonsHtml = '';
                         if (role === 'admin') {
                             buttonsHtml = `
-                                <button class="edit-button" onclick="startEdit('${doc.id}', '${customer.ชื่อ || ''}', '${customer.เบอร์โทร || ''}', '${customer.ที่อยู่ || ''}', '${customer.วันที่ติดตั้ง || ''}', '${customer.ปีการรับประกัน || ''}', '${customer.อินเวอร์เตอร์รุ่น || ''}', '${customer.หมายเลขซีเรียลอินเวอร์เตอร์ || ''}', '${customer.ยี่ห้อรุ่นแผง || ''}', '${customer.จำนวนแผง || ''}', '${customer.ละติจูด || ''}', '${customer.ลองจิจูด 
- || ''}', '${customer.รูปภาพ1 || ''}', '${customer.รูปภาพ2 || ''}')">แก้ไข</button>
+                                <button class="edit-button" onclick="startEdit('${doc.id}', '${customer.ชื่อ || ''}', '${customer.เบอร์โทร || ''}', '${customer.ที่อยู่ || ''}', '${customer.วันที่ติดตั้ง || ''}', '${customer.ปีการรับประกัน || ''}', '${customer.อินเวอร์เตอร์รุ่น || ''}', '${customer.หมายเลขซีเรียลอินเวอร์เตอร์ || ''}', '${customer.ยี่ห้อรุ่นแผง || ''}', '${customer.จำนวนแผง || ''}', '${customer.ละติจูด || ''}', '${customer.ลองจิจูด || ''}', '${customer.รูปภาพ1 || ''}', '${customer.รูปภาพ2 || ''}')">แก้ไข</button>
                                 <button class="delete-button" onclick="deleteCustomerData('${doc.id}')">ลบ</button>
-                                ${isServiceDue ?
- `<button class="service-button" onclick="markAsServiced('${doc.id}')">เซอร์วิสแล้ว</button>` : ''}
+                                ${isServiceDue ? `<button class="service-button" onclick="markAsServiced('${doc.id}')">เซอร์วิสแล้ว</button>` : ''}
                             `;
                         } else if (role === 'editor') {
                             buttonsHtml = `
-                                ${isServiceDue ?
- `<button class="service-button" onclick="markAsServiced('${doc.id}')">เซอร์วิสแล้ว</button>` : ''}
+                                ${isServiceDue ? `<button class="service-button" onclick="markAsServiced('${doc.id}')">เซอร์วิสแล้ว</button>` : ''}
                             `;
                         } else {
                             buttonsHtml = '';
@@ -992,36 +991,23 @@ none;">
                         const detailsId = `details-${doc.id}`;
                         card.innerHTML = `
                             <div class="customer-card-info">
-                                <p><strong>ชื่อ-นามสกุล:</strong> ${customer.ชื่อ ||
- '-'}</p>
-                                <p><strong>เบอร์โทรศัพท์:</strong> ${customer.เบอร์โทร ||
- '-'}</p>
-                                <p><strong>ที่อยู่:</strong> ${customer.ที่อยู่ ||
- '-'}</p>
-                                ${warningText ?
- `<p class="warning-text">${warningText}</p>` : ''}
+                                <p><strong>ชื่อ-นามสกุล:</strong> ${customer.ชื่อ || '-'}</p>
+                                <p><strong>เบอร์โทรศัพท์:</strong> ${customer.เบอร์โทร || '-'}</p>
+                                <p><strong>ที่อยู่:</strong> ${customer.ที่อยู่ || '-'}</p>
+                                ${warningText ? `<p class="warning-text">${warningText}</p>` : ''}
                                 <button class="card-details-button" onclick="toggleDetails('${detailsId}', this)">ดูรายละเอียด</button>
                                 <div id="${detailsId}" class="card-details" style="display:none;">
                            
-                                    <p><strong>วันที่ติดตั้ง:</strong> ${customer.วันที่ติดตั้ง ||
- '-'}</p>
-                                    <p><strong>ปีการรับประกัน:</strong> ${customer.ปีการรับประกัน ||
- '-'}</p>
-                                    <p><strong>วันที่เซอร์วิสล่าสุด:</strong> ${customer.วันที่เซอร์วิสล่าสุด ||
- '-'}</p>
-                                    <p><strong>อินเวอร์เตอร์รุ่น:</strong> ${customer.อินเวอร์เตอร์รุ่น ||
- '-'}</p>
-                                    <p><strong>หมายเลขซีเรียลอินเวอร์เตอร์:</strong> ${customer.หมายเลขซีเรียลอินเวอร์เตอร์ ||
- '-'}</p>
-                                    <p><strong>ยี่ห้อและรุ่นแผง:</strong> ${customer.ยี่ห้อรุ่นแผง ||
- '-'}</p>
-                                    <p><strong>จำนวนแผงที่ใช้:</strong> ${customer.จำนวนแผง ||
- '-'}</p>
+                                    <p><strong>วันที่ติดตั้ง:</strong> ${customer.วันที่ติดตั้ง || '-'}</p>
+                                    <p><strong>ปีการรับประกัน:</strong> ${customer.ปีการรับประกัน || '-'}</p>
+                                    <p><strong>วันที่เซอร์วิสล่าสุด:</strong> ${customer.วันที่เซอร์วิสล่าสุด || '-'}</p>
+                                    <p><strong>อินเวอร์เตอร์รุ่น:</strong> ${customer.อินเวอร์เตอร์รุ่น || '-'}</p>
+                                    <p><strong>หมายเลขซีเรียลอินเวอร์เตอร์:</strong> ${customer.หมายเลขซีเรียลอินเวอร์เตอร์ || '-'}</p>
+                                    <p><strong>ยี่ห้อและรุ่นแผง:</strong> ${customer.ยี่ห้อรุ่นแผง || '-'}</p>
+                                    <p><strong>จำนวนแผงที่ใช้:</strong> ${customer.จำนวนแผง || '-'}</p>
                                     <div class="customer-card-images">
-                                        ${customer.รูปภาพ1 ?
- `<img src="${customer.รูปภาพ1}" class="customer-card-image" alt="Image 1">` : ''}
-                                        ${customer.รูปภาพ2 ?
- `<img src="${customer.รูปภาพ2}" class="customer-card-image" alt="Image 2">` : ''}
+                                        ${customer.รูปภาพ1 ? `<img src="${customer.รูปภาพ1}" class="customer-card-image" alt="Image 1">` : ''}
+                                        ${customer.รูปภาพ2 ? `<img src="${customer.รูปภาพ2}" class="customer-card-image" alt="Image 2">` : ''}
                                     </div>
                                 </div>
                           
