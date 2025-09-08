@@ -19,8 +19,6 @@
             border-radius: 10px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
-
-        /* โค้ดใหม่สำหรับหน้าจอขนาดเล็กกว่า 600px */
         @media (max-width: 1000px) {
             .container {
                 max-width: 100%;
@@ -230,7 +228,6 @@
             cursor: pointer;
             display: none;
         }
-        /* เพิ่ม CSS สำหรับการแจ้งเตือน */
         @keyframes blink-animation {
             to {
                 visibility: hidden;
@@ -276,7 +273,6 @@
         #filter-buttons button:hover {
             background-color: #155bb5;
         }
-        /* CSS สำหรับส่วนย่อ-ขยาย Card */
         .card-details-button {
             background-color: #555;
             color: white;
@@ -361,6 +357,11 @@
             <input type="tel" id="phone" placeholder="เบอร์โทรศัพท์" required>
           
             <input type="text" id="address" placeholder="ที่อยู่" required>
+
+            <!-- เพิ่มช่องสำหรับ username และ password -->
+            <p><strong>ข้อมูลการเข้าสู่ระบบ:</strong></p>
+            <input type="text" id="username" placeholder="Username" required>
+            <input type="password" id="password" placeholder="Password" required>
             
             <p><strong>ข้อมูลการติดตั้ง:</strong></p>
             <div class="input-row">
@@ -737,6 +738,8 @@ none;">
             const name = document.getElementById('name').value;
             const phone = document.getElementById('phone').value;
             const address = document.getElementById('address').value;
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
             const installDate = document.getElementById('install_date').value;
             const warrantyYears = document.getElementById('warranty_years').value;
             const inverterModel = document.getElementById('inverter_model').value;
@@ -748,7 +751,7 @@ none;">
             const imageFile1 = document.getElementById('imageUpload1').files[0];
             const imageFile2 = document.getElementById('imageUpload2').files[0];
 
-            if (!name || !phone || !address || !installDate || !warrantyYears || !inverterModel || !inverterSerial || !panelModel || !panelCount || !latitude || !longitude) {
+            if (!name || !phone || !address || !username || !password || !installDate || !warrantyYears || !inverterModel || !inverterSerial || !panelModel || !panelCount || !latitude || !longitude) {
                 alert("กรุณากรอกข้อมูลให้ครบถ้วนและปักหมุดบนแผนที่");
                 return;
             }
@@ -766,6 +769,8 @@ none;">
                 ชื่อ: name,
                 เบอร์โทร: phone,
                 ที่อยู่: address,
+                username: username,
+                password: password,
                 วันที่ติดตั้ง: installDate,
   
                 ปีการรับประกัน: parseInt(warrantyYears),
@@ -812,6 +817,8 @@ none;">
             document.getElementById('name').value = '';
             document.getElementById('phone').value = '';
             document.getElementById('address').value = '';
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
             document.getElementById('install_date').value = '';
             document.getElementById('warranty_years').value = '';
             document.getElementById('inverter_model').value = '';
@@ -836,7 +843,7 @@ none;">
             originalImages = { image1: null, image2: null };
         }
 
-        async function startEdit(docId, name, phone, address, installDate, warrantyYears, inverterModel, inverterSerial, panelModel, panelCount, latitude, longitude, image1, image2) {
+        async function startEdit(docId, name, phone, address, username, password, installDate, warrantyYears, inverterModel, inverterSerial, panelModel, panelCount, latitude, longitude, image1, image2) {
             if(userRole !== 'admin' && userRole !== 'editor') {
                 alert("คุณไม่มีสิทธิ์แก้ไขข้อมูลลูกค้า");
                 return;
@@ -846,6 +853,8 @@ none;">
             document.getElementById('name').value = name;
             document.getElementById('phone').value = phone;
             document.getElementById('address').value = address;
+            document.getElementById('username').value = username;
+            document.getElementById('password').value = password;
             document.getElementById('install_date').value = installDate;
             document.getElementById('warranty_years').value = warrantyYears;
             document.getElementById('inverter_model').value = inverterModel;
@@ -972,7 +981,7 @@ none;">
                         let buttonsHtml = '';
                         if (role === 'admin') {
                             buttonsHtml = `
-                                <button class="edit-button" onclick="startEdit('${doc.id}', '${customer.ชื่อ || ''}', '${customer.เบอร์โทร || ''}', '${customer.ที่อยู่ || ''}', '${customer.วันที่ติดตั้ง || ''}', '${customer.ปีการรับประกัน || ''}', '${customer.อินเวอร์เตอร์รุ่น || ''}', '${customer.หมายเลขซีเรียลอินเวอร์เตอร์ || ''}', '${customer.ยี่ห้อรุ่นแผง || ''}', '${customer.จำนวนแผง || ''}', '${customer.ละติจูด || ''}', '${customer.ลองจิจูด || ''}', '${customer.รูปภาพ1 || ''}', '${customer.รูปภาพ2 || ''}')">แก้ไข</button>
+                                <button class="edit-button" onclick="startEdit('${doc.id}', '${customer.ชื่อ || ''}', '${customer.เบอร์โทร || ''}', '${customer.ที่อยู่ || ''}', '${customer.username || ''}', '${customer.password || ''}', '${customer.วันที่ติดตั้ง || ''}', '${customer.ปีการรับประกัน || ''}', '${customer.อินเวอร์เตอร์รุ่น || ''}', '${customer.หมายเลขซีเรียลอินเวอร์เตอร์ || ''}', '${customer.ยี่ห้อรุ่นแผง || ''}', '${customer.จำนวนแผง || ''}', '${customer.ละติจูด || ''}', '${customer.ลองจิจูด || ''}', '${customer.รูปภาพ1 || ''}', '${customer.รูปภาพ2 || ''}')">แก้ไข</button>
                                 <button class="delete-button" onclick="deleteCustomerData('${doc.id}')">ลบ</button>
                                 ${isServiceDue ? `<button class="service-button" onclick="markAsServiced('${doc.id}')">เซอร์วิสแล้ว</button>` : ''}
                             `;
@@ -994,6 +1003,8 @@ none;">
                                 <p><strong>ชื่อ-นามสกุล:</strong> ${customer.ชื่อ || '-'}</p>
                                 <p><strong>เบอร์โทรศัพท์:</strong> ${customer.เบอร์โทร || '-'}</p>
                                 <p><strong>ที่อยู่:</strong> ${customer.ที่อยู่ || '-'}</p>
+                                <p><strong>Username:</strong> ${customer.username || '-'}</p>
+                                <p><strong>Password:</strong> ${customer.password || '-'}</p>
                                 ${warningText ? `<p class="warning-text">${warningText}</p>` : ''}
                                 <button class="card-details-button" onclick="toggleDetails('${detailsId}', this)">ดูรายละเอียด</button>
                                 <div id="${detailsId}" class="card-details" style="display:none;">
