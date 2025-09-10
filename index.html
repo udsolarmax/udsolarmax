@@ -327,7 +327,7 @@
     <button id="logout-button" onclick="logout()">ออกจากระบบ</button>
 
     <div id="app-container" class="container" style="display:none;">
-      
+        
         <button onclick="window.location.reload()" style="position: absolute; top: 20px; left: 20px; z-index: 1000; padding: 10px; font-size: 14px; background-color: #f0f0f0; border: 1px solid #ccc; border-radius: 5px;">รีเฟรช</button>
 
         <div id="current-date-container">
@@ -337,15 +337,14 @@
                 <input type="date" id="mock-date-input" onchange="setMockDate(this.value)">
                 <button onclick="resetMockDate()">รีเซ็ต</button>
             </div>
-      
         </div>
+
         <div id="logo-container">
             <img id="logo-preview" src="#" alt="Company Logo" style="display:none;">
             <input type="file" id="logo-upload" accept="image/*" style="display:none;">
             <div class="logo-buttons" id="logo-buttons" style="display:none;">
                 <button onclick="document.getElementById('logo-upload').click()">อัปโหลด Logo</button>
-                <button class="delete-logo-button" onclick="deleteLogo()">ลบ Logo"></button>
-    
+                <button class="delete-logo-button" onclick="deleteLogo()">ลบ Logo</button>
             </div>
         </div>
         
@@ -355,33 +354,41 @@
             <input type="hidden" id="docId">
             <input type="text" id="name" placeholder="ชื่อ-นามสกุล" required>
             <input type="tel" id="phone" placeholder="เบอร์โทรศัพท์" required>
-          
             <input type="text" id="address" placeholder="ที่อยู่" required>
 
-            <!-- เพิ่มช่องสำหรับ username และ password -->
             <p><strong>ข้อมูลการเข้าสู่ระบบ:</strong></p>
             <input type="text" id="username" placeholder="Username" required>
             <input type="password" id="password" placeholder="Password" required>
             
             <p><strong>ข้อมูลการติดตั้ง:</strong></p>
             <div class="input-row">
-                <input type="date" id="install_date" placeholder="1.
-วันที่ติดตั้งระบบ" required>
-                <input type="number" id="warranty_years" placeholder="2.
-จำนวนปีการรับประกัน" required>
+                <input type="date" id="install_date" placeholder="1. วันที่ติดตั้งระบบ" required>
+                <input type="number" id="warranty_years" placeholder="2. จำนวนปีการรับประกัน" required>
             </div>
             
             <p><strong>ข้อมูลอุปกรณ์:</strong></p>
             <div class="input-row">
                 <input type="text" id="inverter_model" placeholder="อินเวอร์เตอร์รุ่น" required>
                 <input type="text" id="inverter_serial" placeholder="หมายเลขซีเรียลอินเวอร์เตอร์" required>
-          
             </div>
             <div class="input-row">
                 <input type="text" id="panel_model" placeholder="ยี่ห้อและรุ่นแผง" required>
                 <input type="number" id="panel_count" placeholder="จำนวนแผงที่ใช้" required>
             </div>
             
+            <p><strong>ข้อมูลการขออนุญาต:</strong></p>
+            <input type="text" id="document_status" placeholder="สถานะการยื่นเอกสาร">
+            
+            <div class="image-upload-box">
+                <label for="peaReceiptUpload">อัปโหลดสลิปค่าเชื่อมต่อ PEA (PDF)</label>
+                <input type="file" id="peaReceiptUpload" accept="application/pdf">
+            </div>
+            
+            <div class="image-upload-box">
+                <label for="peaLicenseUpload">อัปโหลดใบอนุญาตเชื่อมต่อ PEA (PDF)</label>
+                <input type="file" id="peaLicenseUpload" accept="application/pdf">
+            </div>
+
             <p><strong>บันทึกพิกัดบนแผนที่:</strong> ปักหมุดหรือกรอกค่า</p>
         
             <div id="map"></div>
@@ -391,20 +398,16 @@
             <button onclick="getCurrentLocation()">ใช้ตำแหน่งปัจจุบัน</button>
             <button onclick="updateMapFromInput()">อัปเดตแผนที่จากพิกัด</button>
             
-
-            <div 
-class="image-upload-section">
+            <div class="image-upload-section">
                 <div class="image-upload-box">
                     <label for="imageUpload1">อัปโหลดรูปภาพ 1</label>
                     <input type="file" id="imageUpload1" accept="image/*" onchange="previewImage(event, 'imagePreview1')">
                     <img id="imagePreview1" class="image-preview" src="#" alt="Image 1 Preview" style="display: none;">
-        
                 </div>
                 <div class="image-upload-box">
                     <label for="imageUpload2">อัปโหลดรูปภาพ 2</label>
                     <input type="file" id="imageUpload2" accept="image/*" onchange="previewImage(event, 'imagePreview2')">
-                    <img id="imagePreview2" class="image-preview" src="#" alt="Image 2 Preview" style="display: 
-none;">
+                    <img id="imagePreview2" class="image-preview" src="#" alt="Image 2 Preview" style="display: none;">
                 </div>
             </div>
 
@@ -415,7 +418,6 @@ none;">
         
         <div id="search-container">
             <input type="text" id="search-input" placeholder="ค้นหาตามชื่อ-นามสกุล...">
-          
             <button onclick="executeSearch()">ค้นหา</button>
         </div>
 
@@ -427,7 +429,6 @@ none;">
 
         <div id="customer-list" class="data-list">
             <p style="text-align: center;">กำลังโหลดข้อมูล...</p>
- 
         </div>
 
     </div>
@@ -443,7 +444,6 @@ none;">
             apiKey: "AIzaSyD2xxqJ9nmVovD03n1Y2ljFdgSEMIRKJMw",
             authDomain: "udsolarmaxservice.firebaseapp.com",
             projectId: "udsolarmaxservice",
-    
             storageBucket: "udsolarmaxservice.firebasestorage.app",
             messagingSenderId: "781138559265",
             appId: "1:781138559265:web:2467a654ff30e0c9a25128",
@@ -462,14 +462,14 @@ none;">
         let mockDate = null;
         let currentFilter = 'all';
         let currentSearchTerm = '';
+
         function updateDisplayDate() {
             const displayDate = mockDate || today;
             document.getElementById('current-date').textContent = 'วันที่ปัจจุบัน: ' + displayDate.toLocaleDateString('th-TH');
         }
 
         function setMockDate(dateString) {
-            mockDate = dateString ?
-            new Date(dateString) : null;
+            mockDate = dateString ? new Date(dateString) : null;
             updateDisplayDate();
             updateCustomerListWithAdminButtons(userRole, currentFilter, currentSearchTerm);
         }
@@ -486,7 +486,6 @@ none;">
                 const rolesDoc = await db.collection('admin_roles').doc(user.email).get();
                 if (rolesDoc.exists) {
                     userRole = rolesDoc.data().role;
-        
                 } else {
                     userRole = 'viewer';
                 }
@@ -500,7 +499,6 @@ none;">
                     document.getElementById('mock-date-container').style.display = 'block';
                 } else {
                     document.getElementById('mock-date-container').style.display = 'none';
- 
                 }
 
                 if (userRole === 'admin' || userRole === 'editor') {
@@ -595,14 +593,12 @@ none;">
             if (!auth.currentUser || userRole !== 'admin') {
                 alert("คุณไม่มีสิทธิ์อัปโหลด Logo");
                 this.value = '';
-    
                 return;
             }
             const file = event.target.files[0];
             if (file) {
                 const logoRef = storage.ref().child('company_logo/logo.png');
                 try {
-           
                     await logoRef.put(file);
                     const logoUrl = await logoRef.getDownloadURL();
                     db.collection('settings').doc('company').set({ logoUrl: logoUrl }, { merge: true });
@@ -614,6 +610,7 @@ none;">
                 }
             }
         });
+
         async function deleteLogo() {
             if (!auth.currentUser || userRole !== 'admin') {
                 alert("คุณไม่มีสิทธิ์ลบ Logo");
@@ -671,23 +668,19 @@ none;">
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
-                      
                         const pos = {
                             lat: position.coords.latitude,
                             lng: position.coords.longitude
                         };
-             
                         document.getElementById('latitude').value = pos.lat;
                         document.getElementById('longitude').value = pos.lng;
                         map.setCenter(pos);
                         marker.setPosition(pos);
-             
                         map.setZoom(16);
                     },
                     () => {
                         alert("ไม่สามารถดึงตำแหน่งปัจจุบันได้. โปรดตรวจสอบการอนุญาตการเข้าถึงตำแหน่ง");
                     }
-  
                 );
             } else {
                 alert("เบราว์เซอร์ของคุณไม่รองรับ Geolocation");
@@ -704,23 +697,23 @@ none;">
             reader.readAsDataURL(event.target.files[0]);
         }
 
-        async function uploadImage(file) {
+        async function uploadFile(file, folderName) {
             if (!auth.currentUser) {
-                alert("คุณไม่มีสิทธิ์อัปโหลดรูปภาพ");
+                alert("คุณไม่มีสิทธิ์อัปโหลดไฟล์");
                 return null;
             }
             if (!file) return null;
             const storageRef = storage.ref();
-            const fileName = `customer_images/${Date.now()}_${file.name}`;
-            const imageRef = storageRef.child(fileName);
+            const fileName = `${folderName}/${Date.now()}_${file.name}`;
+            const fileRef = storageRef.child(fileName);
             try {
-                await imageRef.put(file);
-                const downloadURL = await imageRef.getDownloadURL();
-                console.log("อัปโหลดรูปภาพสำเร็จ:", downloadURL);
+                await fileRef.put(file);
+                const downloadURL = await fileRef.getDownloadURL();
+                console.log("อัปโหลดไฟล์สำเร็จ:", downloadURL);
                 return downloadURL;
             } catch (error) {
-                console.error("เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ:", error);
-                alert("เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ: " + error.message);
+                console.error("เกิดข้อผิดพลาดในการอัปโหลดไฟล์:", error);
+                alert("เกิดข้อผิดพลาดในการอัปโหลดไฟล์: " + error.message);
                 return null;
             }
         }
@@ -750,18 +743,24 @@ none;">
             const longitude = document.getElementById('longitude').value;
             const imageFile1 = document.getElementById('imageUpload1').files[0];
             const imageFile2 = document.getElementById('imageUpload2').files[0];
-
+            // เพิ่มข้อมูลใหม่
+            const documentStatus = document.getElementById('document_status').value;
+            const peaReceiptFile = document.getElementById('peaReceiptUpload').files[0];
+            const peaLicenseFile = document.getElementById('peaLicenseUpload').files[0];
+            
             if (!name || !phone || !address || !username || !password || !installDate || !warrantyYears || !inverterModel || !inverterSerial || !panelModel || !panelCount || !latitude || !longitude) {
                 alert("กรุณากรอกข้อมูลให้ครบถ้วนและปักหมุดบนแผนที่");
                 return;
             }
 
-            const imageUrl1 = imageFile1 ?
-            await uploadImage(imageFile1) : originalImages.image1;
-            const imageUrl2 = imageFile2 ? await uploadImage(imageFile2) : originalImages.image2;
-            if ((imageFile1 && !imageUrl1) || (imageFile2 && !imageUrl2)) {
-                console.error("การอัปโหลดรูปภาพไม่สมบูรณ์");
-                alert("การอัปโหลดรูปภาพไม่สมบูรณ์ โปรดลองอีกครั้ง");
+            const imageUrl1 = imageFile1 ? await uploadFile(imageFile1, 'customer_images') : originalImages.image1;
+            const imageUrl2 = imageFile2 ? await uploadFile(imageFile2, 'customer_images') : originalImages.image2;
+            const peaReceiptUrl = peaReceiptFile ? await uploadFile(peaReceiptFile, 'pea_receipts') : (isEditing ? originalImages.peaReceipt : null);
+            const peaLicenseUrl = peaLicenseFile ? await uploadFile(peaLicenseFile, 'pea_licenses') : (isEditing ? originalImages.peaLicense : null);
+
+            if ((imageFile1 && !imageUrl1) || (imageFile2 && !imageUrl2) || (peaReceiptFile && !peaReceiptUrl) || (peaLicenseFile && !peaLicenseUrl)) {
+                console.error("การอัปโหลดไฟล์ไม่สมบูรณ์");
+                alert("การอัปโหลดไฟล์ไม่สมบูรณ์ โปรดลองอีกครั้ง");
                 return;
             }
             
@@ -772,19 +771,21 @@ none;">
                 username: username,
                 password: password,
                 วันที่ติดตั้ง: installDate,
-  
                 ปีการรับประกัน: parseInt(warrantyYears),
                 อินเวอร์เตอร์รุ่น: inverterModel,
                 หมายเลขซีเรียลอินเวอร์เตอร์: inverterSerial,
                 ยี่ห้อรุ่นแผง: panelModel,
                 จำนวนแผง: parseInt(panelCount),
-                ละติจูด: 
-                parseFloat(latitude),
+                ละติจูด: parseFloat(latitude),
                 ลองจิจูด: parseFloat(longitude),
                 รูปภาพ1: imageUrl1,
                 รูปภาพ2: imageUrl2,
+                สถานะการยื่นเอกสาร: documentStatus,
+                สลิปค่าเชื่อมต่อPEA: peaReceiptUrl,
+                ใบอนุญาตเชื่อมต่อPEA: peaLicenseUrl,
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             };
+
             if (isEditing) {
                 if(userRole !== 'admin') {
                     alert("คุณไม่มีสิทธิ์แก้ไขข้อมูลลูกค้า");
@@ -828,22 +829,24 @@ none;">
             document.getElementById('docId').value = '';
             document.getElementById('latitude').value = '';
             document.getElementById('longitude').value = '';
+            document.getElementById('document_status').value = '';
+            document.getElementById('peaReceiptUpload').value = '';
+            document.getElementById('peaLicenseUpload').value = '';
             document.getElementById('submit-button').textContent = 'บันทึกข้อมูล';
             document.getElementById('form-title').textContent = 'บันทึกข้อมูลลูกค้า';
             
             document.getElementById('imageUpload1').value = '';
             document.getElementById('imagePreview1').src = '#';
             document.getElementById('imagePreview1').style.display = 'none';
-
             document.getElementById('imageUpload2').value = '';
             document.getElementById('imagePreview2').src = '#';
             document.getElementById('imagePreview2').style.display = 'none';
 
             isEditing = false;
-            originalImages = { image1: null, image2: null };
+            originalImages = { image1: null, image2: null, peaReceipt: null, peaLicense: null };
         }
 
-        async function startEdit(docId, name, phone, address, username, password, installDate, warrantyYears, inverterModel, inverterSerial, panelModel, panelCount, latitude, longitude, image1, image2) {
+        async function startEdit(docId, name, phone, address, username, password, installDate, warrantyYears, inverterModel, inverterSerial, panelModel, panelCount, latitude, longitude, image1, image2, documentStatus, peaReceiptUrl, peaLicenseUrl) {
             if(userRole !== 'admin' && userRole !== 'editor') {
                 alert("คุณไม่มีสิทธิ์แก้ไขข้อมูลลูกค้า");
                 return;
@@ -863,11 +866,14 @@ none;">
             document.getElementById('panel_count').value = panelCount;
             document.getElementById('latitude').value = latitude;
             document.getElementById('longitude').value = longitude;
+            document.getElementById('document_status').value = documentStatus;
             document.getElementById('submit-button').textContent = 'บันทึกการแก้ไข';
             document.getElementById('form-title').textContent = 'แก้ไขข้อมูลลูกค้า';
             
             originalImages.image1 = image1;
             originalImages.image2 = image2;
+            originalImages.peaReceipt = peaReceiptUrl;
+            originalImages.peaLicense = peaLicenseUrl;
 
             const preview1 = document.getElementById('imagePreview1');
             const preview2 = document.getElementById('imagePreview2');
@@ -914,7 +920,7 @@ none;">
                 alert("ไม่มีข้อมูลพิกัดสำหรับลูกค้ารายนี้");
                 return;
             }
-            const url = `http://google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+            const url = `http://google.com/maps/place/${lat},${lng}`;
             window.open(url, '_blank');
         }
         
@@ -923,15 +929,12 @@ none;">
                 const customerList = document.getElementById("customer-list");
                 customerList.innerHTML = '';
                 
-        
                 if (querySnapshot.empty) {
                     customerList.innerHTML = '<p style="text-align: center;">ยังไม่มีข้อมูลลูกค้า</p>';
                     return;
                 }
 
                 const today = mockDate || new Date();
-
-        
                 let foundCustomers = [];
 
                 querySnapshot.forEach((doc) => {
@@ -939,7 +942,6 @@ none;">
                     let warningText = '';
                     let isServiceDue = false;
 
-  
                     if (customer.ปีการรับประกัน > 0 && customer.วันที่ติดตั้ง) {
                         const installDate = new Date(customer.วันที่ติดตั้ง);
                         const lastServiceDate = customer.วันที่เซอร์วิสล่าสุด ? new Date(customer.วันที่เซอร์วิสล่าสุด) : installDate;
@@ -961,11 +963,10 @@ none;">
                         }
                     }
 
-                    const customerName = customer.ชื่อ ||
- '';
+                    const customerName = customer.ชื่อ || '';
                     const searchFilter = searchTerm === '' || customerName.toLowerCase().includes(searchTerm.toLowerCase());
                     const filterCondition = (filterType === 'all') ||
- (filterType === 'service_due' && (warningText === 'ใกล้ถึงเวลาครบรอบเซอวิสประจำปีแล้ว' || warningText === 'ถึงเวลาครบรอบเซอวิสประจำปีแล้ว')) ||
+                                            (filterType === 'service_due' && (warningText === 'ใกล้ถึงเวลาครบรอบเซอวิสประจำปีแล้ว' || warningText === 'ถึงเวลาครบรอบเซอวิสประจำปีแล้ว')) ||
                                             (filterType === 'warranty_expired' && warningText === 'หมดระยะการรับประกันแล้ว');
                     const shouldDisplay = searchFilter && filterCondition;
 
@@ -981,7 +982,7 @@ none;">
                         let buttonsHtml = '';
                         if (role === 'admin') {
                             buttonsHtml = `
-                                <button class="edit-button" onclick="startEdit('${doc.id}', '${customer.ชื่อ || ''}', '${customer.เบอร์โทร || ''}', '${customer.ที่อยู่ || ''}', '${customer.username || ''}', '${customer.password || ''}', '${customer.วันที่ติดตั้ง || ''}', '${customer.ปีการรับประกัน || ''}', '${customer.อินเวอร์เตอร์รุ่น || ''}', '${customer.หมายเลขซีเรียลอินเวอร์เตอร์ || ''}', '${customer.ยี่ห้อรุ่นแผง || ''}', '${customer.จำนวนแผง || ''}', '${customer.ละติจูด || ''}', '${customer.ลองจิจูด || ''}', '${customer.รูปภาพ1 || ''}', '${customer.รูปภาพ2 || ''}')">แก้ไข</button>
+                                <button class="edit-button" onclick="startEdit('${doc.id}', '${customer.ชื่อ || ''}', '${customer.เบอร์โทร || ''}', '${customer.ที่อยู่ || ''}', '${customer.username || ''}', '${customer.password || ''}', '${customer.วันที่ติดตั้ง || ''}', '${customer.ปีการรับประกัน || ''}', '${customer.อินเวอร์เตอร์รุ่น || ''}', '${customer.หมายเลขซีเรียลอินเวอร์เตอร์ || ''}', '${customer.ยี่ห้อรุ่นแผง || ''}', '${customer.จำนวนแผง || ''}', '${customer.ละติจูด || ''}', '${customer.ลองจิจูด || ''}', '${customer.รูปภาพ1 || ''}', '${customer.รูปภาพ2 || ''}', '${customer.สถานะการยื่นเอกสาร || ''}', '${customer.สลิปค่าเชื่อมต่อPEA || ''}', '${customer.ใบอนุญาตเชื่อมต่อPEA || ''}')">แก้ไข</button>
                                 <button class="delete-button" onclick="deleteCustomerData('${doc.id}')">ลบ</button>
                                 ${isServiceDue ? `<button class="service-button" onclick="markAsServiced('${doc.id}')">เซอร์วิสแล้ว</button>` : ''}
                             `;
@@ -1008,7 +1009,6 @@ none;">
                                 ${warningText ? `<p class="warning-text">${warningText}</p>` : ''}
                                 <button class="card-details-button" onclick="toggleDetails('${detailsId}', this)">ดูรายละเอียด</button>
                                 <div id="${detailsId}" class="card-details" style="display:none;">
-                           
                                     <p><strong>วันที่ติดตั้ง:</strong> ${customer.วันที่ติดตั้ง || '-'}</p>
                                     <p><strong>ปีการรับประกัน:</strong> ${customer.ปีการรับประกัน || '-'}</p>
                                     <p><strong>วันที่เซอร์วิสล่าสุด:</strong> ${customer.วันที่เซอร์วิสล่าสุด || '-'}</p>
@@ -1016,21 +1016,23 @@ none;">
                                     <p><strong>หมายเลขซีเรียลอินเวอร์เตอร์:</strong> ${customer.หมายเลขซีเรียลอินเวอร์เตอร์ || '-'}</p>
                                     <p><strong>ยี่ห้อและรุ่นแผง:</strong> ${customer.ยี่ห้อรุ่นแผง || '-'}</p>
                                     <p><strong>จำนวนแผงที่ใช้:</strong> ${customer.จำนวนแผง || '-'}</p>
+                                    <p><strong>สถานะการยื่นเอกสาร:</strong> ${customer.สถานะการยื่นเอกสาร || '-'}</p>
+                                    <p><strong>สลิปค่าเชื่อมต่อ PEA:</strong> ${customer.สลิปค่าเชื่อมต่อPEA ? `<a href="${customer.สลิปค่าเชื่อมต่อPEA}" target="_blank">ดูไฟล์</a>` : '-'}</p>
+                                    <p><strong>ใบอนุญาตเชื่อมต่อ PEA:</strong> ${customer.ใบอนุญาตเชื่อมต่อPEA ? `<a href="${customer.ใบอนุญาตเชื่อมต่อPEA}" target="_blank">ดูไฟล์</a>` : '-'}</p>
                                     <div class="customer-card-images">
                                         ${customer.รูปภาพ1 ? `<img src="${customer.รูปภาพ1}" class="customer-card-image" alt="Image 1">` : ''}
                                         ${customer.รูปภาพ2 ? `<img src="${customer.รูปภาพ2}" class="customer-card-image" alt="Image 2">` : ''}
                                     </div>
                                 </div>
-                          
                             </div>
                             <div class="card-buttons">
                                 ${buttonsHtml}
                             </div>
-         
                         `;
                         customerList.appendChild(card);
                     }
                 });
+
                 if (searchTerm !== '' && foundCustomers.length === 1) {
                     const foundCustomer = foundCustomers[0];
                     if (foundCustomer.ละติจูด && foundCustomer.ลองจิจูด) {
