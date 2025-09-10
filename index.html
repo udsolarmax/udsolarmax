@@ -531,7 +531,13 @@
                 await auth.signInWithEmailAndPassword(email, password);
                 alert("เข้าสู่ระบบสำเร็จ!");
             } catch (error) {
-                alert("เข้าสู่ระบบไม่สำเร็จ: " + error.message);
+                let errorMessage = "การล็อกอินไม่สำเร็จ: โปรดตรวจสอบอีเมลและรหัสผ่านอีกครั้ง";
+                if (error.code === 'auth/wrong-password') {
+                    errorMessage = "รหัสผ่านไม่ถูกต้อง";
+                } else if (error.code === 'auth/user-not-found') {
+                    errorMessage = "ไม่พบผู้ใช้งานนี้";
+                }
+                alert(errorMessage);
             }
         }
 
@@ -627,7 +633,7 @@
                     alert("เกิดข้อผิดพลาดในการลบ Logo: " + error.message);
                 }
             }
-        }
+        });
 
         function initMap() {
             const defaultLocation = { lat: 17.412198, lng: 102.781617 };
@@ -1057,7 +1063,7 @@
         
         function executeSearch() {
             currentSearchTerm = document.getElementById('search-input').value;
-            currentFilter = 'all'; // Set filter to 'all' when searching
+            currentFilter = 'all';
             updateCustomerListWithAdminButtons(userRole, currentFilter, currentSearchTerm);
         }
 
