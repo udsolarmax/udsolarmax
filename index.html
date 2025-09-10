@@ -422,9 +422,9 @@
         </div>
 
         <div id="filter-buttons" style="display: none;">
-            <button onclick="updateCustomerListWithAdminButtons(userRole, 'all', currentSearchTerm)">ดูทั้งหมด</button>
-            <button onclick="updateCustomerListWithAdminButtons(userRole, 'service_due', currentSearchTerm)">ดูรายการที่ต้องเซอร์วิส</button>
-            <button onclick="updateCustomerListWithAdminButtons(userRole, 'warranty_expired', currentSearchTerm)">หมดระยะการรับประกัน</button>
+            <button onclick="setFilter('all')">ดูทั้งหมด</button>
+            <button onclick="setFilter('service_due')">ดูรายการที่ต้องเซอร์วิส</button>
+            <button onclick="setFilter('warranty_expired')">หมดระยะการรับประกัน</button>
         </div>
 
         <div id="customer-list" class="data-list">
@@ -922,6 +922,13 @@
             }
             const url = `http://google.com/maps/place/${lat},${lng}`;
             window.open(url, '_blank');
+        }
+
+        function setFilter(filterType) {
+            currentFilter = filterType;
+            currentSearchTerm = ''; // รีเซ็ตคำค้นหา
+            document.getElementById('search-input').value = ''; // ล้างช่องค้นหา
+            updateCustomerListWithAdminButtons(userRole, currentFilter, currentSearchTerm);
         }
         
         function updateCustomerListWithAdminButtons(role, filterType = 'all', searchTerm = '') {
