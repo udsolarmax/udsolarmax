@@ -926,7 +926,7 @@
                 alert("ไม่มีข้อมูลพิกัดสำหรับลูกค้ารายนี้");
                 return;
             }
-            const url = `http://google.com/maps/place/${lat},${lng}`;
+            const url = `http://maps.google.com/?q=${lat},${lng}`;
             window.open(url, '_blank');
         }
 
