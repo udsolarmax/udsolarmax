@@ -1002,7 +1002,7 @@
                         card.innerHTML = `
                             <div class="customer-card-info">
                                 <p><strong>ชื่อ-นามสกุล:</strong> ${customer.ชื่อ || '-'}</p>
-                                <p><strong>เบอร์โทรศัพท์:</strong> ${customer.เบอร์โทร || '-'}</p>
+                                <p><strong>เบอร์โทรศัพท์:</strong> <a href="tel:${customer.เบอร์โทร || ''}">${customer.เบอร์โทร || '-'}</a></p>
                                 <p><strong>ที่อยู่:</strong> ${customer.ที่อยู่ || '-'}</p>
                                 <p><strong>Username:</strong> ${customer.username || '-'}</p>
                                 <p><strong>Password:</strong> ${customer.password || '-'}</p>
@@ -1020,8 +1020,8 @@
                                     <p><strong>สลิปค่าเชื่อมต่อ PEA:</strong> ${customer.สลิปค่าเชื่อมต่อPEA ? `<a href="${customer.สลิปค่าเชื่อมต่อPEA}" target="_blank">ดูไฟล์</a>` : '-'}</p>
                                     <p><strong>ใบอนุญาตเชื่อมต่อ PEA:</strong> ${customer.ใบอนุญาตเชื่อมต่อPEA ? `<a href="${customer.ใบอนุญาตเชื่อมต่อPEA}" target="_blank">ดูไฟล์</a>` : '-'}</p>
                                     <div class="customer-card-images">
-                                        ${customer.รูปภาพ1 ? `<img src="${customer.รูปภาพ1}" class="customer-card-image" alt="Image 1">` : ''}
-                                        ${customer.รูปภาพ2 ? `<img src="${customer.รูปภาพ2}" class="customer-card-image" alt="Image 2">` : ''}
+                                        ${customer.รูปภาพ1 ? `<a href="${customer.รูปภาพ1}" target="_blank"><img src="${customer.รูปภาพ1}" class="customer-card-image" alt="Image 1"></a>` : ''}
+                                        ${customer.รูปภาพ2 ? `<a href="${customer.รูปภาพ2}" target="_blank"><img src="${customer.รูปภาพ2}" class="customer-card-image" alt="Image 2"></a>` : ''}
                                     </div>
                                 </div>
                             </div>
