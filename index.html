@@ -627,7 +627,7 @@
                     alert("เกิดข้อผิดพลาดในการลบ Logo: " + error.message);
                 }
             }
-        });
+        }
 
         function initMap() {
             const defaultLocation = { lat: 17.412198, lng: 102.781617 };
@@ -1057,6 +1057,7 @@
         
         function executeSearch() {
             currentSearchTerm = document.getElementById('search-input').value;
+            currentFilter = 'all'; // Set filter to 'all' when searching
             updateCustomerListWithAdminButtons(userRole, currentFilter, currentSearchTerm);
         }
 
