@@ -512,7 +512,7 @@
                 updateDisplayDate();
                 updateFormAndButtonsVisibility(userRole);
                 updateCustomerListWithAdminButtons(userRole, currentFilter, currentSearchTerm);
-                initMap();
+                // ไม่ต้องเรียก initMap() ที่นี่ ให้ Google Maps เรียกเองผ่าน callback
             } else {
                 userRole = null;
                 document.getElementById('login-form-container').style.display = 'block';
@@ -592,8 +592,6 @@
         function promptLogin() {
             alert("กรุณาเข้าสู่ระบบเพื่อแก้ไขหรือลบข้อมูล");
         }
-        // --- จบส่วนของ Authentication ---
-        
         // --- ส่วนของ Logo ---
         document.getElementById('logo-upload').addEventListener('change', async function(event) {
             if (!auth.currentUser || userRole !== 'admin') {
@@ -609,6 +607,7 @@
                     const logoUrl = await logoRef.getDownloadURL();
                     db.collection('settings').doc('company').set({ logoUrl: logoUrl }, { merge: true });
                     alert('อัปโหลด Logo สำเร็จ!');
+                    fetchCompanyLogo();
                 } 
                 catch (error) {
                     console.error('เกิดข้อผิดพลาดในการอัปโหลด Logo:', error);
@@ -626,15 +625,36 @@
                 try {
                     const logoRef = storage.ref().child('company_logo/logo.png');
                     await logoRef.delete();
-                    db.collection('settings').doc('company').set({ logoUrl: null }, { merge: true });
+                    await db.collection('settings').doc('company').set({ logoUrl: null }, { merge: true });
                     alert('ลบ Logo สำเร็จ!');
+                    fetchCompanyLogo();
                 } catch (error) {
                     console.error("เกิดข้อผิดพลาดในการลบ Logo:", error);
                     alert("เกิดข้อผิดพลาดในการลบ Logo: " + error.message);
                 }
             }
-        });
+        }
 
+        async function fetchCompanyLogo() {
+            try {
+                const doc = await db.collection('settings').doc('company').get();
+                const logoPreview = document.getElementById('logo-preview');
+                if (doc.exists && doc.data().logoUrl) {
+                    logoPreview.src = doc.data().logoUrl;
+                    logoPreview.style.display = 'block';
+                } else {
+                    logoPreview.style.display = 'none';
+                }
+            } catch (error) {
+                console.error("เกิดข้อผิดพลาดในการดึง Logo:", error);
+            }
+        }
+
+        window.onload = function() {
+            fetchCompanyLogo();
+        };
+
+        // --- ส่วนของ Google Maps API ---
         function initMap() {
             const defaultLocation = { lat: 17.412198, lng: 102.781617 };
             map = new google.maps.Map(document.getElementById("map"), {
@@ -926,7 +946,7 @@
                 alert("ไม่มีข้อมูลพิกัดสำหรับลูกค้ารายนี้");
                 return;
             }
-            const url = `http://maps.google.com/?q=${lat},${lng}`;
+            const url = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
             window.open(url, '_blank');
         }
 
