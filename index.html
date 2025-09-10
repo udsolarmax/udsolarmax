@@ -926,8 +926,8 @@
 
         function setFilter(filterType) {
             currentFilter = filterType;
-            currentSearchTerm = ''; // รีเซ็ตคำค้นหา
-            document.getElementById('search-input').value = ''; // ล้างช่องค้นหา
+            currentSearchTerm = '';
+            document.getElementById('search-input').value = '';
             updateCustomerListWithAdminButtons(userRole, currentFilter, currentSearchTerm);
         }
         
