@@ -633,7 +633,7 @@
                     alert("เกิดข้อผิดพลาดในการลบ Logo: " + error.message);
                 }
             }
-        }
+        });
 
         async function fetchCompanyLogo() {
             try {
@@ -946,7 +946,7 @@
                 alert("ไม่มีข้อมูลพิกัดสำหรับลูกค้ารายนี้");
                 return;
             }
-            const url = `http://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+            const url = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
             window.open(url, '_blank');
         }
 
@@ -1119,6 +1119,16 @@
                 buttonElement.textContent = 'ดูรายละเอียด';
             }
         }
+
+        // เพิ่ม event listener สำหรับช่องค้นหา
+        document.getElementById('search-input').addEventListener('keypress', function(event) {
+            // ตรวจสอบว่าปุ่มที่กดคือ "Enter"
+            if (event.key === 'Enter') {
+                // ยกเลิกการทำงานเริ่มต้นของปุ่ม Enter (เช่นการส่งฟอร์ม)
+                event.preventDefault(); 
+                executeSearch();
+            }
+        });
     </script>
 </body>
 </html>
