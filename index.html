@@ -946,7 +946,8 @@
                 alert("ไม่มีข้อมูลพิกัดสำหรับลูกค้ารายนี้");
                 return;
             }
-            const url = `http://googleusercontent.com/maps.google.com/?q=${lat},${lng}`;
+            // แก้ไข URL ให้ถูกต้องเพื่อเปิด Google Maps
+            const url = `https://maps.google.com/?q=${lat},${lng}`;
             window.open(url, '_blank');
         }
 
